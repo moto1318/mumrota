@@ -1,3192 +1,1565 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Care Rota — Weekly Schedule</title>
-  <style>
-    /* ==========================================================================
-       1. Smartphone Zero-Horizontal-Scroll Viewport & iOS Design Tokens
-       ========================================================================== */
-    :root {
-      --bg-grouped: #F2F2F7;
-      --bg-card: #FFFFFF;
-      --bg-glass: rgba(255, 255, 255, 0.94);
-      --bg-pill-track: #E5E5EA;
-      --border-hairline: #E5E5EA;
-      --border-strong: #C7C7CC;
-
-      --text-primary: #1C1C1E;
-      --text-secondary: #636366;
-      --text-tertiary: #8E8E93;
-
-      --ios-blue: #007AFF;
-      --ios-blue-soft: rgba(0, 122, 255, 0.12);
-      --ios-green: #34C759;
-      --ios-green-text: #1B7F37;
-      --ios-amber: #FF9500;
-      --ios-amber-text: #B26200;
-      --ios-red: #FF3B30;
-      --ios-red-bg: rgba(255, 59, 48, 0.12);
-
-      --night-indigo-dark: #1E1B4B;
-      --night-indigo-mid: #312E81;
-      --night-gold: #FDE68A;
-      --night-gold-border: #F59E0B;
-
-      --slot-h: 26px;
-      --night-h: 52px;
-
-      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    }
-
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
-
-    html, body {
-      width: 100%;
-      max-width: 100vw;
-      overflow-x: hidden;
-      margin: 0;
-      padding: 0;
-      background-color: var(--bg-grouped);
-      color: var(--text-primary);
-      font-family: var(--font-sans);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      -webkit-tap-highlight-color: transparent;
-      line-height: 1.3;
-    }
-
-    button, input {
-      font-family: inherit;
-    }
-
-    /* ==========================================================================
-       2. App Shell & Sticky Top Chrome
-       ========================================================================== */
-    .app-shell {
-      width: 100%;
-      max-width: 680px;
-      margin: 0 auto;
-      padding-bottom: calc(108px + env(safe-area-inset-bottom));
-      overflow-x: hidden;
-    }
-
-    .sticky-header {
-      position: sticky;
-      top: 0;
-      z-index: 45;
-      width: 100%;
-      max-width: 100%;
-      background: var(--bg-glass);
-      backdrop-filter: saturate(180%) blur(18px);
-      -webkit-backdrop-filter: saturate(180%) blur(18px);
-      border-bottom: 1px solid var(--border-strong);
-    }
-
-    /* Row 1: Title, Week Date Range & Compact Export / Sheet Buttons */
-    .header-top-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-      padding: 7px 8px 5px;
-      width: 100%;
-      min-width: 0;
-    }
-
-    .brand-block {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      min-width: 0;
-      flex: 1 1 auto;
-    }
-
-    .brand-icon {
-      width: 26px;
-      height: 26px;
-      border-radius: 7px;
-      background: linear-gradient(145deg, #007AFF, #0051D5);
-      color: #FFFFFF;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 2px 5px rgba(0, 122, 255, 0.25);
-    }
-
-    .brand-titles {
-      min-width: 0;
-      overflow: hidden;
-    }
-
-    .brand-titles h1 {
-      margin: 0;
-      font-size: 15px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .week-badge-text {
-      font-size: 10.5px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .header-actions {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-
-    .hdr-pill-btn {
-      appearance: none;
-      border: 1px solid var(--border-strong);
-      background: var(--bg-card);
-      color: var(--text-primary);
-      height: 28px;
-      padding: 0 7px;
-      border-radius: 8px;
-      font-size: 10.5px;
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
-      cursor: pointer;
-      white-space: nowrap;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-    }
-
-    .hdr-pill-btn:active {
-      transform: scale(0.96);
-      background: var(--bg-grouped);
-    }
-
-    .hdr-pill-btn.export-btn {
-      color: var(--ios-blue);
-      border-color: rgba(0, 122, 255, 0.3);
-      background: rgba(0, 122, 255, 0.06);
-    }
-
-    .sync-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .sync-dot.local {
-      background: var(--ios-amber);
-      box-shadow: 0 0 0 2px rgba(255, 149, 0, 0.2);
-    }
-
-    .sync-dot.synced {
-      background: var(--ios-green);
-      box-shadow: 0 0 0 2px rgba(52, 199, 89, 0.22);
-    }
-
-    .sync-dot.syncing {
-      background: var(--ios-blue);
-      animation: pulseDot 0.9s infinite ease-in-out;
-    }
-
-    @keyframes pulseDot {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.4); opacity: 0.6; }
-    }
-
-    /* Row 2: Week Nav (< Today >) + Active Carer & Custom Name Input */
-    .nav-and-custom-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-      padding: 0 8px 6px;
-      width: 100%;
-    }
-
-    .week-nav-seg {
-      display: inline-flex;
-      align-items: center;
-      background: var(--bg-pill-track);
-      padding: 2px;
-      border-radius: 8px;
-      flex-shrink: 0;
-    }
-
-    .week-nav-btn {
-      appearance: none;
-      border: none;
-      background: transparent;
-      color: var(--text-primary);
-      font-size: 11px;
-      font-weight: 700;
-      height: 25px;
-      padding: 0 8px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .week-nav-btn.is-today {
-      background: var(--bg-card);
-      color: var(--ios-blue);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-    }
-
-    .custom-name-box {
-      position: relative;
-      flex: 1 1 auto;
-      min-width: 0;
-      display: flex;
-      align-items: center;
-    }
-
-    .custom-name-input {
-      width: 100%;
-      min-width: 0;
-      height: 29px;
-      padding: 0 24px 0 9px;
-      border: 1px solid var(--border-strong);
-      border-radius: 8px;
-      background: var(--bg-card);
-      color: var(--text-primary);
-      font-size: 12px;
-      font-weight: 600;
-      outline: none;
-    }
-
-    .custom-name-input:focus {
-      border-color: var(--ios-blue);
-      box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.16);
-    }
-
-    .clear-custom-btn {
-      position: absolute;
-      right: 5px;
-      width: 18px;
-      height: 18px;
-      border: none;
-      border-radius: 50%;
-      background: #C7C7CC;
-      color: #FFFFFF;
-      font-size: 12px;
-      font-weight: 700;
-      line-height: 1;
-      padding: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .clear-custom-btn.visible {
-      display: inline-flex;
-    }
-
-    /* Row 3: 9 Default Carer Chips Strip (HYE, ALIM, BASIT, HAFIZ, KAYYUM, BISAB, HAL, SOF, AFFA) */
-    .carer-chips-bar {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 5px 8px 6px;
-      border-top: 1px solid var(--border-hairline);
-      background: rgba(249, 249, 251, 0.9);
-      width: 100%;
-      max-width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-
-    .carer-chips-bar::-webkit-scrollbar {
-      display: none;
-    }
-
-    .carer-chip {
-      appearance: none;
-      border: 1.5px solid transparent;
-      border-radius: 999px;
-      height: 27px;
-      padding: 0 10px;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.01em;
-      white-space: nowrap;
-      flex-shrink: 0;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: transform 90ms ease, box-shadow 120ms ease;
-    }
-
-    .carer-chip:active {
-      transform: scale(0.94);
-    }
-
-    .carer-chip.is-active {
-      box-shadow: 0 0 0 2px #1C1C1E, 0 2px 6px rgba(0, 0, 0, 0.14);
-      transform: translateY(-0.5px);
-    }
-
-    .carer-chip-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    /* Row 4: Sticky 8-Column Day Header (40px Time + 7 × minmax(0, 1fr)) */
-    .day-headers-grid {
-      display: grid;
-      grid-template-columns: 40px repeat(7, minmax(0, 1fr));
-      width: 100%;
-      max-width: 100%;
-      background: #F9F9FB;
-      border-top: 1px solid var(--border-hairline);
-    }
-
-    .time-corner-cell {
-      width: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 9px;
-      font-weight: 800;
-      color: var(--text-tertiary);
-      border-right: 1px solid var(--border-strong);
-      padding: 5px 0;
-    }
-
-    .day-hdr-cell {
-      min-width: 0;
-      padding: 4px 1px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 1px;
-      border-right: 1px solid var(--border-hairline);
-      text-align: center;
-    }
-
-    .day-hdr-cell:last-child {
-      border-right: none;
-    }
-
-    .day-hdr-cell.is-weekend {
-      background: rgba(242, 242, 247, 0.6);
-    }
-
-    .day-hdr-abbr {
-      font-size: 9.5px;
-      font-weight: 800;
-      color: var(--text-secondary);
-      line-height: 1.1;
-    }
-
-    .day-hdr-cell.is-today .day-hdr-abbr {
-      color: var(--ios-blue);
-    }
-
-    .day-hdr-num {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      font-size: 11.5px;
-      font-weight: 800;
-      color: var(--text-primary);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .day-hdr-cell.is-today .day-hdr-num {
-      background: var(--ios-blue);
-      color: #FFFFFF;
-    }
-
-    /* ==========================================================================
-       3. 8-Column Schedule Body (28 Half-Hour Slots + Double-Size NIGHT Row)
-       ========================================================================== */
-    .rota-body-grid {
-      display: grid;
-      grid-template-columns: 40px repeat(7, minmax(0, 1fr));
-      width: 100%;
-      max-width: 100%;
-      background: var(--bg-card);
-      border-bottom: 1px solid var(--border-strong);
-    }
-
-    /* Left 40px Time Axis Column */
-    .time-axis-col {
-      width: 40px;
-      display: flex;
-      flex-direction: column;
-      border-right: 1px solid var(--border-strong);
-      background: #FAFAFC;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    .time-label-cell {
-      height: var(--slot-h);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-variant-numeric: tabular-nums;
-      padding: 0 2px;
-    }
-
-    /* Even row: 09:00, 10:00 ... 22:00 */
-    .time-label-cell.is-hour {
-      font-size: 10px;
-      font-weight: 800;
-      color: var(--text-primary);
-      border-bottom: 1px dashed var(--border-hairline);
-    }
-
-    /* Odd row: :30 */
-    .time-label-cell.is-half {
-      font-size: 9px;
-      font-weight: 600;
-      color: var(--text-tertiary);
-      border-bottom: 1px solid var(--border-strong);
-    }
-
-    /* Row 29: Double-height NIGHT row (52px) */
-    .time-label-cell.is-night {
-      height: var(--night-h);
-      border-top: 2px solid #4338CA;
-      background: linear-gradient(160deg, var(--night-indigo-dark) 0%, var(--night-indigo-mid) 100%);
-      flex-direction: column;
-      gap: 2px;
-      padding: 3px 1px;
-    }
-
-    .night-axis-badge {
-      font-size: 8.5px;
-      font-weight: 900;
-      letter-spacing: 0.03em;
-      color: var(--night-gold);
-      background: rgba(245, 158, 11, 0.22);
-      border: 1px solid rgba(253, 230, 138, 0.45);
-      border-radius: 4px;
-      padding: 2px 3px;
-      line-height: 1;
-    }
-
-    .night-axis-sub {
-      font-size: 7.5px;
-      font-weight: 700;
-      color: #C7D2FE;
-      line-height: 1;
-    }
-
-    /* Day Columns (7 × minmax(0, 1fr)) */
-    .day-column {
-      position: relative;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      border-right: 1px solid var(--border-hairline);
-      background: var(--bg-card);
-    }
-
-    .day-column:last-child {
-      border-right: none;
-    }
-
-    .day-column.is-weekend {
-      background: #FCFCFE;
-    }
-
-    /* Background Interactive Slot Cells */
-    .slot-bg-cell {
-      height: var(--slot-h);
-      width: 100%;
-      position: relative;
-      cursor: pointer;
-      user-select: none;
-      -webkit-user-select: none;
-      transition: background-color 80ms ease;
-    }
-
-    .slot-bg-cell.is-hour {
-      border-bottom: 1px dashed var(--border-hairline);
-    }
-
-    .slot-bg-cell.is-half {
-      border-bottom: 1px solid var(--border-strong);
-    }
-
-    /* Double-height NIGHT cell in each day column */
-    .slot-bg-cell.is-night {
-      height: var(--night-h);
-      border-top: 2px solid #4338CA;
-      background: linear-gradient(180deg, rgba(49, 46, 129, 0.09) 0%, rgba(245, 158, 11, 0.11) 100%);
-    }
-
-    /* Active Selection Highlight */
-    .slot-bg-cell.is-selected {
-      background: rgba(0, 122, 255, 0.22) !important;
-      box-shadow: inset 0 0 0 1.5px var(--ios-blue);
-      z-index: 3;
-    }
-
-    /* Merged Continuous Carer Blocks Layer */
-    .merged-blocks-layer {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 4;
-    }
-
-    .merged-block-card {
-      position: absolute;
-      border-radius: 6px;
-      border: 1.5px solid transparent;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 1px 2px;
-      overflow: hidden;
-      text-align: center;
-      cursor: pointer;
-      pointer-events: auto;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
-      transition: transform 90ms ease, box-shadow 120ms ease;
-    }
-
-    .merged-block-card:active {
-      transform: scale(0.97);
-    }
-
-    .merged-block-card.is-night-block {
-      box-shadow: 0 2px 6px rgba(30, 27, 75, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.45);
-    }
-
-    .merged-block-name {
-      width: 100%;
-      font-size: 10.5px;
-      font-weight: 900;
-      letter-spacing: -0.01em;
-      line-height: 1.1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .merged-block-time {
-      width: 100%;
-      font-size: 8.5px;
-      font-weight: 700;
-      opacity: 0.88;
-      line-height: 1.1;
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* ==========================================================================
-       4. Compact Weekly Hours Footer Summary Strip
-       ========================================================================== */
-    .weekly-summary-card {
-      margin: 10px 8px 0;
-      padding: 10px 12px;
-      background: var(--bg-card);
-      border-radius: 12px;
-      border: 1px solid var(--border-hairline);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    }
-
-    .summary-header-line {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 11.5px;
-      font-weight: 700;
-      color: var(--text-secondary);
-    }
-
-    .summary-pills-wrap {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .summary-carer-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      border: 1px solid transparent;
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* ==========================================================================
-       5. Slide-Up Thumb Action Bar (When Slots Are Selected)
-       ========================================================================== */
-    .thumb-action-bar {
-      position: fixed;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%) translateY(115%);
-      width: 100%;
-      max-width: 680px;
-      z-index: 65;
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: saturate(180%) blur(20px);
-      -webkit-backdrop-filter: saturate(180%) blur(20px);
-      border-top: 1px solid var(--border-strong);
-      box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.14);
-      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-      transition: transform 200ms cubic-bezier(0.2, 0.85, 0.25, 1);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .thumb-action-bar.visible {
-      transform: translateX(-50%) translateY(0);
-    }
-
-    .thumb-bar-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-    }
-
-    .selection-range-pill {
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--ios-blue);
-      background: var(--ios-blue-soft);
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .thumb-sec-actions {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .thumb-sec-btn {
-      appearance: none;
-      border: 1px solid var(--border-strong);
-      background: var(--bg-card);
-      color: var(--text-primary);
-      font-size: 11.5px;
-      font-weight: 700;
-      height: 30px;
-      padding: 0 9px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .thumb-sec-btn.danger {
-      color: var(--ios-red);
-      background: var(--ios-red-bg);
-      border-color: rgba(255, 59, 48, 0.35);
-    }
-
-    .thumb-primary-btn {
-      appearance: none;
-      border: none;
-      background: var(--ios-blue);
-      color: #FFFFFF;
-      font-size: 14.5px;
-      font-weight: 800;
-      width: 100%;
-      height: 44px;
-      border-radius: 11px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      box-shadow: 0 3px 10px rgba(0, 122, 255, 0.28);
-    }
-
-    .thumb-primary-btn:active {
-      transform: scale(0.985);
-    }
-
-    /* ==========================================================================
-       6. iOS Bottom Sheets (Merged Block Inspector & Google Sheet Sync Modal)
-       ========================================================================== */
-    .sheet-backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      background: rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-    }
-
-    .sheet-backdrop.open {
-      display: flex;
-    }
-
-    .ios-bottom-sheet {
-      width: 100%;
-      max-width: 680px;
-      max-height: 90vh;
-      overflow-y: auto;
-      background: var(--bg-card);
-      border-top-left-radius: 18px;
-      border-top-right-radius: 18px;
-      padding: 10px 16px calc(18px + env(safe-area-inset-bottom));
-      box-shadow: 0 -10px 36px rgba(0, 0, 0, 0.24);
-      animation: slideSheetUp 200ms cubic-bezier(0.2, 0.85, 0.25, 1);
-    }
-
-    @keyframes slideSheetUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-
-    .sheet-grabber {
-      width: 36px;
-      height: 4.5px;
-      border-radius: 999px;
-      background: #D1D1D6;
-      margin: 0 auto 12px;
-    }
-
-    .sheet-top-hdr {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .sheet-top-hdr h2 {
-      margin: 0;
-      font-size: 17px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-
-    .sheet-top-hdr p {
-      margin: 2px 0 0;
-      font-size: 12.5px;
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-
-    .sheet-close-btn {
-      appearance: none;
-      border: none;
-      background: var(--bg-grouped);
-      color: var(--text-secondary);
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      font-size: 18px;
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    /* Block Inspector Details Card */
-    .block-detail-banner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 14px;
-      border-radius: 12px;
-      border: 1.5px solid transparent;
-      margin-bottom: 14px;
-    }
-
-    .block-detail-name {
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: -0.01em;
-    }
-
-    .block-detail-meta {
-      font-size: 12.5px;
-      font-weight: 700;
-      margin-top: 2px;
-    }
-
-    .inspector-section-label {
-      font-size: 11.5px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      margin-bottom: 7px;
-    }
-
-    .reassign-chips-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-
-    .reassign-custom-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 14px;
-    }
-
-    .reassign-input {
-      flex: 1 1 auto;
-      min-width: 0;
-      height: 38px;
-      padding: 0 11px;
-      border: 1px solid var(--border-strong);
-      border-radius: 9px;
-      font-size: 13.5px;
-      font-weight: 600;
-      outline: none;
-    }
-
-    .reassign-apply-btn {
-      appearance: none;
-      border: none;
-      background: var(--ios-blue);
-      color: #FFFFFF;
-      font-size: 13px;
-      font-weight: 700;
-      height: 38px;
-      padding: 0 14px;
-      border-radius: 9px;
-      cursor: pointer;
-    }
-
-    .inspector-footer-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      padding-top: 10px;
-      border-top: 1px solid var(--border-hairline);
-    }
-
-    .insp-btn {
-      appearance: none;
-      border: 1px solid var(--border-strong);
-      background: var(--bg-grouped);
-      color: var(--text-primary);
-      font-size: 13px;
-      font-weight: 700;
-      height: 40px;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-
-    .insp-btn.danger {
-      background: var(--ios-red-bg);
-      color: var(--ios-red);
-      border-color: rgba(255, 59, 48, 0.3);
-    }
-
-    /* Google Sheet Sync Modal Styles */
-    .open-sheet-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      height: 42px;
-      border-radius: 11px;
-      background: #E8F5E9;
-      border: 1px solid #A5D6A7;
-      color: #1B5E20;
-      font-size: 13.5px;
-      font-weight: 700;
-      text-decoration: none;
-      margin-bottom: 12px;
-    }
-
-    .sync-steps-list {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      margin-bottom: 12px;
-    }
-
-    .sync-step-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      padding: 8px 10px;
-      border-radius: 9px;
-      background: var(--bg-grouped);
-      font-size: 12px;
-      color: var(--text-primary);
-    }
-
-    .step-badge {
-      width: 19px;
-      height: 19px;
-      border-radius: 50%;
-      background: var(--ios-blue);
-      color: #FFFFFF;
-      font-size: 10.5px;
-      font-weight: 800;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-
-    .script-hdr-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 5px;
-    }
-
-    .script-hdr-bar span {
-      font-size: 11.5px;
-      font-weight: 700;
-      color: var(--text-secondary);
-    }
-
-    .copy-script-btn {
-      appearance: none;
-      border: none;
-      background: var(--ios-blue);
-      color: #FFFFFF;
-      font-size: 11.5px;
-      font-weight: 700;
-      height: 30px;
-      padding: 0 11px;
-      border-radius: 7px;
-      cursor: pointer;
-    }
-
-    .copy-script-btn.copied {
-      background: var(--ios-green-text);
-    }
-
-    .script-textarea {
-      width: 100%;
-      height: 112px;
-      padding: 9px;
-      border-radius: 9px;
-      border: 1px solid var(--border-strong);
-      background: #1C1C1E;
-      color: #F2F2F7;
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      line-height: 1.38;
-      resize: vertical;
-      margin-bottom: 10px;
-    }
-
-    .url-field-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .url-field-input {
-      width: 100%;
-      height: 40px;
-      padding: 0 11px;
-      border-radius: 9px;
-      border: 1.5px solid var(--border-strong);
-      font-size: 13px;
-      margin-bottom: 10px;
-      outline: none;
-    }
-
-    .url-field-input:focus {
-      border-color: var(--ios-blue);
-    }
-
-    .sync-util-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    /* ==========================================================================
-       7. Toast Pill
-       ========================================================================== */
-    .toast-pill {
-      position: fixed;
-      top: 12px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-28px);
-      z-index: 200;
-      background: rgba(28, 28, 30, 0.94);
-      color: #FFFFFF;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 8px 14px;
-      border-radius: 999px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 160ms ease, transform 160ms ease;
-      max-width: calc(100vw - 24px);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .toast-pill.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-  </style>
-</head>
-<body>
-  <div class="app-shell">
-    <!-- ======================================================================
-         Sticky Top Smartphone Header & Carer Selector
-         ====================================================================== -->
-    <header class="sticky-header">
-      <!-- Row 1: Brand, Week Date Range, JPEG, PDF, Sheet Sync Pill -->
-      <div class="header-top-row">
-        <div class="brand-block">
-          <span class="brand-icon" aria-hidden="true">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="3"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-          </span>
-          <div class="brand-titles">
-            <h1>Care Rota</h1>
-            <div class="week-badge-text" id="weekRangeLabel">Mon 16 Nov – Sun 22 Nov 2026</div>
-          </div>
-        </div>
-
-        <div class="header-actions">
-          <button type="button" class="hdr-pill-btn export-btn" id="exportJpegBtn" title="Export Weekly Rota as JPEG Image">
-            JPEG
-          </button>
-          <button type="button" class="hdr-pill-btn export-btn" id="exportPdfBtn" title="Export Weekly Rota as PDF">
-            PDF
-          </button>
-          <button type="button" class="hdr-pill-btn" id="openSheetModalBtn" title="Google Sheet Sync Settings">
-            <span class="sync-dot local" id="syncDot"></span>
-            <span id="syncPillText">Local</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Row 2: Week Switcher (< Today >) & Custom Carer Name Input -->
-      <div class="nav-and-custom-row">
-        <div class="week-nav-seg" role="group" aria-label="Week navigation">
-          <button type="button" class="week-nav-btn" id="prevWeekBtn" aria-label="Previous week">&lt;</button>
-          <button type="button" class="week-nav-btn is-today" id="todayWeekBtn">Today</button>
-          <button type="button" class="week-nav-btn" id="nextWeekBtn" aria-label="Next week">&gt;</button>
-        </div>
-
-        <div class="custom-name-box">
-          <input
-            type="text"
-            id="customNameInput"
-            class="custom-name-input"
-            placeholder="+ Custom name..."
-            autocomplete="off"
-            aria-label="Custom carer name"
-          />
-          <button type="button" class="clear-custom-btn" id="clearCustomBtn" aria-label="Clear custom name">×</button>
-        </div>
-      </div>
-
-      <!-- Row 3: 9 Default Carer Chips (HYE, ALIM, BASIT, HAFIZ, KAYYUM, BISAB, HAL, SOF, AFFA) -->
-      <div class="carer-chips-bar" id="carerChipsBar" role="group" aria-label="Default carer selection"></div>
-
-      <!-- Row 4: Sticky 8-Column Day Headers (40px Time + 7 × minmax(0, 1fr)) -->
-      <div class="day-headers-grid" id="dayHeadersGrid" role="row"></div>
-    </header>
-
-    <!-- ======================================================================
-         8-Column Weekly Schedule Grid (09:00–22:30 + Double-Height NIGHT Row)
-         ====================================================================== -->
-    <main class="rota-body-grid" id="rotaBodyGrid" role="grid" aria-label="Weekly Care Rota Schedule"></main>
-
-    <!-- ======================================================================
-         Weekly Hours Summary Card
-         ====================================================================== -->
-    <section class="weekly-summary-card" aria-label="Weekly care coverage summary">
-      <div class="summary-header-line">
-        <span>Weekly Care Allocation</span>
-        <span id="totalCoverageSummary">0.0 hrs + 0 Nights</span>
-      </div>
-      <div class="summary-pills-wrap" id="summaryPillsWrap"></div>
-    </section>
-  </div>
-
-  <!-- ========================================================================
-       Slide-Up Thumb Action Bar (Multi-Hour / Half-Hour Selection)
-       ======================================================================== -->
-  <div class="thumb-action-bar" id="thumbActionBar" role="region" aria-label="Selected slots actions">
-    <div class="thumb-bar-top">
-      <span class="selection-range-pill" id="selectionRangeBadge">MON • 09:00 – 10:00</span>
-      <div class="thumb-sec-actions">
-        <button type="button" class="thumb-sec-btn" id="clearSelectionBtn">Clear Selection</button>
-        <button type="button" class="thumb-sec-btn danger" id="removeCareSelectionBtn">Remove Care</button>
-      </div>
-    </div>
-    <button type="button" class="thumb-primary-btn" id="assignSelectionBtn">
-      Assign to HYE
-    </button>
-  </div>
-
-  <!-- ========================================================================
-       iOS Bottom Sheet 1: Merged Block Inspector
-       ======================================================================== -->
-  <div class="sheet-backdrop" id="blockInspectorBackdrop" role="dialog" aria-modal="true" aria-labelledby="inspectorTitle">
-    <div class="ios-bottom-sheet">
-      <div class="sheet-grabber"></div>
-      <div class="sheet-top-hdr">
-        <div>
-          <h2 id="inspectorTitle">Care Shift Details</h2>
-          <p id="inspectorSubtitle">Monday, 16 Nov 2026</p>
-        </div>
-        <button type="button" class="sheet-close-btn" id="closeInspectorBtn" aria-label="Close">×</button>
-      </div>
-
-      <div class="block-detail-banner" id="blockDetailBanner">
-        <div>
-          <div class="block-detail-name" id="blockDetailName">HYE</div>
-          <div class="block-detail-meta" id="blockDetailMeta">09:00 – 12:00 • 3.0 hrs</div>
-        </div>
-      </div>
-
-      <div class="inspector-section-label">Reassign Carer</div>
-      <div class="reassign-chips-grid" id="reassignChipsGrid"></div>
-
-      <div class="reassign-custom-row">
-        <input
-          type="text"
-          id="reassignCustomInput"
-          class="reassign-input"
-          placeholder="Or type another carer name..."
-          autocomplete="off"
-        />
-        <button type="button" class="reassign-apply-btn" id="reassignApplyBtn">Apply</button>
-      </div>
-
-      <div class="inspector-footer-actions">
-        <button type="button" class="insp-btn" id="splitEditBlockBtn">Split / Edit Slots</button>
-        <button type="button" class="insp-btn danger" id="deleteBlockBtn">Delete Block</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========================================================================
-       iOS Bottom Sheet 2: Google Sheet Sync Modal
-       ======================================================================== -->
-  <div class="sheet-backdrop" id="sheetSyncBackdrop" role="dialog" aria-modal="true" aria-labelledby="syncModalTitle">
-    <div class="ios-bottom-sheet">
-      <div class="sheet-grabber"></div>
-      <div class="sheet-top-hdr">
-        <div>
-          <h2 id="syncModalTitle">Google Sheet Sync</h2>
-          <p>Sync your Care Rota directly with Google Sheets</p>
-        </div>
-        <button type="button" class="sheet-close-btn" id="closeSyncModalBtn" aria-label="Close">×</button>
-      </div>
-
-      <a
-        href="https://docs.google.com/spreadsheets/d/19eMpJTrOa4fOAnMQ4Qo3oHTFp0mtP0eXlIRQE9jt3jE/edit"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="open-sheet-btn"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-          <polyline points="15 3 21 3 21 9"></polyline>
-          <line x1="10" y1="14" x2="21" y2="3"></line>
-        </svg>
-        Open Linked Google Sheet
-      </a>
-
-      <div class="sync-steps-list">
-        <div class="sync-step-item">
-          <span class="step-badge">1</span>
-          <div>Open the Google Sheet above and choose <strong>Extensions &gt; Apps Script</strong>.</div>
-        </div>
-        <div class="sync-step-item">
-          <span class="step-badge">2</span>
-          <div>Paste the code below, click <strong>Deploy &gt; New deployment &gt; Web app</strong>, set <em>Who has access: Anyone</em>, and deploy.</div>
-        </div>
-        <div class="sync-step-item">
-          <span class="step-badge">3</span>
-          <div>Paste the <strong>Web App URL</strong> below and tap <strong>Save &amp; Sync Now</strong>.</div>
-        </div>
-      </div>
-
-      <div class="script-hdr-bar">
-        <span>Apps Script (Code.gs)</span>
-        <button type="button" class="copy-script-btn" id="copyScriptBtn">Copy Apps Script Code</button>
-      </div>
-      <textarea class="script-textarea" id="scriptTextarea" readonly aria-label="Google Apps Script code"></textarea>
-
-      <label class="url-field-label" for="webAppUrlInput">Google Apps Script Web App URL</label>
-      <input
-        type="url"
-        id="webAppUrlInput"
-        class="url-field-input"
-        placeholder="https://script.google.com/macros/s/.../exec"
-        autocomplete="off"
-      />
-
-      <button type="button" class="thumb-primary-btn" id="saveAndSyncBtn">
-        Save &amp; Sync Now
-      </button>
-
-      <div class="sync-util-grid">
-        <button type="button" class="insp-btn" id="syncNowBtn">Sync Now</button>
-        <button type="button" class="insp-btn" id="loadSampleBtn">Load Sample Rota</button>
-      </div>
-      <div class="sync-util-grid">
-        <button type="button" class="insp-btn danger" id="clearWeekBtn">Clear Week</button>
-        <button type="button" class="insp-btn danger" id="disconnectUrlBtn">Disconnect URL</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast Notification -->
-  <div class="toast-pill" id="toastPill" role="status" aria-live="polite"></div>
-
-  <script>
-    (function () {
-      'use strict';
-
-      /* ======================================================================
-         1. Constants, 29 Time Rows (09:00–22:30 + NIGHT), & 9 Default Carers
-         ====================================================================== */
-      const TODAY_WEEK_START = '2026-11-16';
-      const TODAY_ISO = '2026-11-16';
-      const STORAGE_KEY_URL = 'careRotaWebAppUrl_v2';
-      const STORAGE_KEY_DATA = 'careRotaScheduleData_v2';
-
-      const DAYS_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-      const DAYS_SHORT = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-      const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-      // Exact 9 default carer names in exact requested order
-      const DEFAULT_CARERS = ['HYE', 'ALIM', 'BASIT', 'HAFIZ', 'KAYYUM', 'BISAB', 'HAL', 'SOF', 'AFFA'];
-
-      // Signature high-contrast pastel-and-border palettes for the 9 carers
-      const SIGNATURE_PALETTES = {
-        HYE:    { bg: '#DBEAFE', border: '#3B82F6', text: '#1E3A8A', accent: '#2563EB' },
-        ALIM:   { bg: '#D1FAE5', border: '#10B981', text: '#064E3B', accent: '#059669' },
-        BASIT:  { bg: '#FEF3C7', border: '#F59E0B', text: '#78350F', accent: '#D97706' },
-        HAFIZ:  { bg: '#EDE9FE', border: '#8B5CF6', text: '#4C1D95', accent: '#7C3AED' },
-        KAYYUM: { bg: '#FFE4E6', border: '#F43F5E', text: '#881337', accent: '#E11D48' },
-        BISAB:  { bg: '#CFFAFE', border: '#06B6D4', text: '#164E63', accent: '#0891B2' },
-        HAL:    { bg: '#FFEDD5', border: '#F97316', text: '#7C2D12', accent: '#EA580C' },
-        SOF:    { bg: '#FAE8FF', border: '#D946EF', text: '#701A75', accent: '#C026D3' },
-        AFFA:   { bg: '#ECFCCB', border: '#84CC16', text: '#365314', accent: '#65A30D' }
-      };
-
-      const EXTRA_PALETTES = [
-        { bg: '#E0E7FF', border: '#6366F1', text: '#312E81', accent: '#4F46E5' },
-        { bg: '#FCE7F3', border: '#EC4899', text: '#831843', accent: '#DB2777' },
-        { bg: '#CCFBF1', border: '#14B8A6', text: '#134E4A', accent: '#0D9488' },
-        { bg: '#FEF9C3', border: '#EAB308', text: '#713F12', accent: '#CA8A04' }
-      ];
-
-      // Build the exact 29 rows: 09:00, :30, 10:00, :30 ... 22:00, :30, NIGHT (double height)
-      const TIME_SLOTS = (function buildTimeSlots() {
-        const list = [];
-        for (let h = 9; h <= 22; h++) {
-          const hh = String(h).padStart(2, '0');
-          const nextHh = String(h + 1).padStart(2, '0');
-          list.push({
-            index: list.length,
-            code: `${hh}:00`,
-            axisLabel: `${hh}:00`,
-            startTime: `${hh}:00`,
-            endTime: `${hh}:30`,
-            isHour: true,
-            isHalf: false,
-            isNight: false,
-            heightPx: 26,
-            hoursValue: 0.5
-          });
-          list.push({
-            index: list.length,
-            code: `${hh}:30`,
-            axisLabel: ':30',
-            startTime: `${hh}:30`,
-            endTime: `${nextHh}:00`,
-            isHour: false,
-            isHalf: true,
-            isNight: false,
-            heightPx: 26,
-            hoursValue: 0.5
-          });
-        }
-        // Row 29 (index 28): Double-height NIGHT row
-        list.push({
-          index: 28,
-          code: 'NIGHT',
-          axisLabel: 'NIGHT',
-          startTime: '23:00',
-          endTime: '09:00',
-          isHour: false,
-          isHalf: false,
-          isNight: true,
-          heightPx: 52,
-          hoursValue: 10
-        });
-        return list;
-      })();
-
-      const CODE_TO_ROW = new Map(TIME_SLOTS.map((s) => [s.code, s.index]));
-
-      // Complete Google Apps Script supporting 09:00–22:30 half-hours & NIGHT
-      const GOOGLE_APPS_SCRIPT = `/**
- * Care Rota — Weekly Schedule (Google Apps Script Backend)
- * Tabs automatically managed:
- *   1. "Bookings": WeekStart | Date | Day | Slot | Carer | UpdatedAt
- *   2. "Weekly Rota": Visual Monday–Sunday × 09:00–22:30 + NIGHT matrix
- */
-
-function doGet(e) {
-  var params = (e && e.parameter) ? e.parameter : {};
-  var weekStart = String(params.weekStart || '').trim();
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var bookingsSheet = getOrCreateBookingsSheet_(ss);
-
-  var bookings = getBookingsForWeek_(bookingsSheet, weekStart);
-  if (weekStart) {
-    rebuildWeeklyRotaMatrix_(ss, weekStart, bookings);
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Care Rota" />
+<title>Care Rota — Weekly Schedule</title>
+<style>
+  :root {
+    --bg: #F2F2F7;
+    --surface: #FFFFFF;
+    --surface-secondary: #F8F8FA;
+    --text: #1C1C1E;
+    --text-secondary: #636366;
+    --text-tertiary: #8E8E93;
+    --border: #D1D1D6;
+    --border-light: #E5E5EA;
+    --accent: #007AFF;
+    --accent-soft: #E5F1FF;
+    --night-bg: #111827;
+    --night-cell: #1E293B;
+    --night-border: #334155;
+    --night-gold: #FBBF24;
+    --danger: #FF3B30;
+    --success: #34C759;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.16);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
   }
 
-  return jsonOut_({
-    status: 'ok',
-    weekStart: weekStart,
-    bookings: bookings
-  });
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  .app-shell {
+    width: 100%;
+    max-width: 540px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 84px;
+  }
+
+  /* Sticky Top Header */
+  .top-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-light);
+    padding: max(8px, env(safe-area-inset-top)) 10px 8px;
+  }
+
+  .header-row-1 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .brand-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .app-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    white-space: nowrap;
+  }
+
+  .sync-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 600;
+    background: #F2F2F7;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .sync-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #FF9500;
+  }
+  .sync-pill.synced .sync-dot { background: var(--success); }
+  .sync-pill.error .sync-dot { background: var(--danger); }
+
+  .export-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .btn-mini {
+    border: 1px solid var(--border-light);
+    background: var(--surface-secondary);
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .btn-mini:active { transform: scale(0.96); opacity: 0.85; }
+  .btn-mini.accent {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: rgba(0,122,255,0.25);
+  }
+
+  /* Week Navigation */
+  .week-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 7px;
+  }
+
+  .nav-btn {
+    border: none;
+    background: transparent;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .nav-btn:active { background: rgba(0,0,0,0.06); }
+
+  .week-label-btn {
+    border: none;
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 7px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    cursor: pointer;
+  }
+
+  /* Carer Selector Strip */
+  .carer-strip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .carer-strip::-webkit-scrollbar { display: none; }
+
+  .carer-chip {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .carer-chip:active { transform: scale(0.95); }
+  .carer-chip.active {
+    border-color: #1C1C1E;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.16);
+    transform: translateY(-0.5px);
+  }
+  .chip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .custom-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+  }
+
+  .custom-name-input {
+    flex: 1;
+    min-width: 0;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-secondary);
+    padding: 0 9px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  .custom-name-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #FFF;
+  }
+
+  .mode-pill {
+    height: 30px;
+    padding: 0 9px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    background: var(--surface-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* Zero-Horizontal-Scroll 8-Column Rota Grid */
+  .rota-wrapper {
+    width: 100%;
+    position: relative;
+    background: var(--surface);
+  }
+
+  .day-header-grid {
+    display: grid;
+    grid-template-columns: 40px repeat(7, minmax(0, 1fr));
+    background: var(--surface-secondary);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 129px;
+    z-index: 30;
+  }
+
+  .corner-cell {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--border-light);
+    padding: 5px 1px;
+  }
+
+  .day-head-cell {
+    text-align: center;
+    padding: 4px 1px;
+    border-right: 1px solid var(--border-light);
+    min-width: 0;
+  }
+  .day-head-cell:last-child { border-right: none; }
+  .day-head-cell.today {
+    background: var(--accent-soft);
+  }
+
+  .day-name {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.2px;
+  }
+  .day-head-cell.today .day-name { color: var(--accent); }
+
+  .day-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+    margin-top: 1px;
+  }
+  .day-head-cell.today .day-num {
+    display: inline-block;
+    background: var(--accent);
+    color: #FFF;
+    border-radius: 999px;
+    padding: 0 5px;
+  }
+
+  .schedule-grid {
+    display: grid;
+    grid-template-columns: 40px repeat(7, minmax(0, 1fr));
+    width: 100%;
+    position: relative;
+    touch-action: pan-y;
+  }
+
+  /* Time column cells */
+  .time-cell {
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--border);
+    background: var(--surface-secondary);
+    font-variant-numeric: tabular-nums;
+    padding: 0 2px;
+  }
+  .time-cell.hour-start {
+    border-top: 1px solid var(--border);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .time-cell.half-hour {
+    border-top: 1px dashed var(--border-light);
+    font-size: 9.5px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+  }
+  .time-cell.night-row {
+    height: 54px;
+    border-top: 2px solid #0F172A;
+    background: var(--night-bg);
+    color: var(--night-gold);
+    flex-direction: column;
+    gap: 1px;
+  }
+  .night-title {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+  }
+  .night-sub {
+    font-size: 7.5px;
+    color: #94A3B8;
+    font-weight: 600;
+  }
+
+  /* Slot cells */
+  .slot-cell {
+    height: 24px;
+    border-right: 1px solid var(--border-light);
+    position: relative;
+    cursor: pointer;
+    min-width: 0;
+  }
+  .slot-cell.last-col { border-right: none; }
+  .slot-cell.hour-start { border-top: 1px solid var(--border); }
+  .slot-cell.half-hour { border-top: 1px dashed var(--border-light); }
+
+  .slot-cell.night-row {
+    height: 54px;
+    border-top: 2px solid #0F172A;
+    background: var(--night-cell);
+    border-right: 1px solid var(--night-border);
+  }
+  .slot-cell.night-row.last-col { border-right: none; }
+
+  .slot-cell.selected {
+    background: rgba(0, 122, 255, 0.24) !important;
+    box-shadow: inset 0 0 0 1.5px var(--accent);
+  }
+
+  /* Merged Shift Block */
+  .shift-block {
+    position: absolute;
+    left: 1.5px;
+    right: 1.5px;
+    top: 1.5px;
+    border-radius: 6px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1px 2px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+    border: 1px solid rgba(0,0,0,0.12);
+    pointer-events: auto;
+  }
+
+  .shift-name {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.1px;
+    line-height: 1.05;
+    word-break: break-word;
+    max-width: 100%;
+  }
+
+  .shift-span {
+    font-size: 7.5px;
+    font-weight: 600;
+    opacity: 0.85;
+    margin-top: 1px;
+    line-height: 1;
+  }
+
+  /* Coverage Summary Strip */
+  .summary-strip {
+    padding: 10px 12px;
+    background: var(--surface-secondary);
+    border-top: 1px solid var(--border-light);
+  }
+  .summary-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .summary-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .stat-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Floating Thumb Action Bar */
+  .action-bar {
+    position: fixed;
+    left: 50%;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    transform: translate(-50%, 130%);
+    width: calc(100% - 20px);
+    max-width: 510px;
+    background: rgba(28, 28, 30, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: #FFF;
+    border-radius: 16px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    box-shadow: var(--shadow-lg);
+    z-index: 60;
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .action-bar.visible {
+    transform: translate(-50%, 0);
+  }
+  .action-info {
+    min-width: 0;
+    flex: 1;
+  }
+  .action-title {
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .action-sub {
+    font-size: 10.5px;
+    color: #AEAEB2;
+  }
+  .action-btns {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-bar {
+    border: none;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-bar.primary {
+    background: var(--accent);
+    color: #FFF;
+  }
+  .btn-bar.danger {
+    background: rgba(255,59,48,0.22);
+    color: #FF6961;
+  }
+  .btn-bar.ghost {
+    background: rgba(255,255,255,0.14);
+    color: #FFF;
+    padding: 8px 10px;
+  }
+
+  /* Bottom Sheet Modal */
+  .sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.42);
+    z-index: 80;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .sheet-backdrop.open { display: flex; }
+
+  .bottom-sheet {
+    width: 100%;
+    max-width: 540px;
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 14px 16px max(20px, env(safe-area-inset-bottom));
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.18);
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .sheet-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 999px;
+    margin: 0 auto 12px;
+  }
+  .sheet-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .sheet-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0 0 12px;
+  }
+  .sheet-field {
+    margin-bottom: 10px;
+  }
+  .sheet-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .sheet-input {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  .code-box {
+    background: #1C1C1E;
+    color: #E5E5EA;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px;
+    padding: 10px;
+    border-radius: 10px;
+    max-height: 150px;
+    overflow: auto;
+    white-space: pre;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  .sheet-btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .sheet-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .sheet-btn.primary { background: var(--accent); color: #FFF; }
+  .sheet-btn.secondary { background: var(--bg); color: var(--text); }
+  .sheet-btn.danger { background: #FFE5E5; color: var(--danger); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top));
+    left: 50%;
+    transform: translate(-50%, -140%);
+    background: #1C1C1E;
+    color: #FFF;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 100;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+    transition: transform 0.2s ease;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <header class="top-header" id="topHeader">
+    <div class="header-row-1">
+      <div class="brand-group">
+        <span class="app-title">Care Rota</span>
+        <button class="sync-pill" id="syncPill" onclick="openSyncSheet()">
+          <span class="sync-dot"></span>
+          <span id="syncStatusText">Local</span>
+        </button>
+      </div>
+      <div class="export-actions">
+        <button class="btn-mini" onclick="exportAsJPEG()">JPEG</button>
+        <button class="btn-mini accent" onclick="exportAsPDF()">PDF</button>
+        <button class="btn-mini" onclick="openSyncSheet()">Sheet</button>
+      </div>
+    </div>
+
+    <div class="week-nav">
+      <button class="nav-btn" onclick="changeWeek(-1)">‹ Prev</button>
+      <button class="week-label-btn" id="weekLabelBtn" onclick="goToday()">16–22 Nov 2026</button>
+      <button class="nav-btn" onclick="changeWeek(1)">Next ›</button>
+    </div>
+
+    <div class="carer-strip" id="carerStrip"></div>
+
+    <div class="custom-input-wrap">
+      <input
+        type="text"
+        id="customCarerInput"
+        class="custom-name-input"
+        placeholder="+ Custom carer name..."
+        maxlength="18"
+        oninput="onCustomNameInput(this.value)"
+      />
+      <button class="mode-pill" id="tapModeBtn" onclick="toggleTapMode()">
+        <span id="tapModeIcon">✋</span>
+        <span id="tapModeText">Select</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="rota-wrapper">
+    <div class="day-header-grid" id="dayHeaderGrid"></div>
+    <div class="schedule-grid" id="scheduleGrid"></div>
+  </div>
+
+  <div class="summary-strip">
+    <div class="summary-title">Weekly Care Coverage</div>
+    <div class="summary-pills" id="summaryPills"></div>
+  </div>
+</div>
+
+<!-- Floating Selection Action Bar -->
+<div class="action-bar" id="actionBar">
+  <div class="action-info">
+    <div class="action-title" id="actionTitle">2 slots selected</div>
+    <div class="action-sub" id="actionSub">Tap Assign for HYE</div>
+  </div>
+  <div class="action-btns">
+    <button class="btn-bar ghost" onclick="clearSelection()">✕</button>
+    <button class="btn-bar danger" onclick="removeSelectedSlots()">Clear</button>
+    <button class="btn-bar primary" id="assignBtn" onclick="assignSelectedSlots()">Assign</button>
+  </div>
+</div>
+
+<!-- Block Inspector Sheet -->
+<div class="sheet-backdrop" id="blockSheet" onclick="if(event.target===this) closeBlockSheet()">
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h3 class="sheet-title" id="blockSheetTitle">HYE</h3>
+    <p class="sheet-desc" id="blockSheetDesc">Mon 16 Nov · 09:00 – 11:30 (2.5 hrs)</p>
+    <div class="sheet-field">
+      <label class="sheet-label">Reassign Block To</label>
+      <div class="carer-strip" id="reassignStrip" style="flex-wrap:wrap;"></div>
+    </div>
+    <div class="sheet-btn-row">
+      <button class="sheet-btn danger" onclick="deleteInspectedBlock()">Remove Shift</button>
+      <button class="sheet-btn secondary" onclick="closeBlockSheet()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Google Sheet Sync Modal -->
+<div class="sheet-backdrop" id="syncSheet" onclick="if(event.target===this) closeSyncSheet()">
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h3 class="sheet-title">Google Sheet Sync</h3>
+    <p class="sheet-desc">Connects this smartphone rota to your Google Sheet via Apps Script Web App.</p>
+
+    <div class="sheet-field">
+      <label class="sheet-label">Google Sheet URL</label>
+      <input type="text" class="sheet-input" readonly value="https://docs.google.com/spreadsheets/d/19eMpJTrOa4fOAnMQ4Qo3oHTFp0mtP0eXlIRQE9jt3jE/edit" />
+    </div>
+
+    <div class="sheet-field">
+      <label class="sheet-label">Apps Script Web App URL (exec)</label>
+      <input type="url" id="webAppUrlInput" class="sheet-input" placeholder="https://script.google.com/macros/s/.../exec" />
+    </div>
+
+    <div class="sheet-field">
+      <label class="sheet-label">1. Copy & Paste into Extensions → Apps Script → Deploy Web App</label>
+      <div class="code-box" id="appsScriptCode">function doGet(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Bookings') || ss.insertSheet('Bookings');
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['WeekKey', 'DayIndex', 'SlotIndex', 'Carer', 'UpdatedAt']);
+  }
+  const rows = sheet.getDataRange().getValues().slice(1);
+  return ContentService.createTextOutput(JSON.stringify({ ok: true, rows }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
-  var lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-
-  try {
-    var raw = (e && e.postData && e.postData.contents) ? e.postData.contents : '{}';
-    var payload = JSON.parse(raw);
-
-    var action = String(payload.action || 'add');
-    var weekStart = String(payload.weekStart || '').trim();
-    var carerName = String(payload.carerName || '').trim();
-    var slots = Array.isArray(payload.slots) ? payload.slots : [];
-
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var bookingsSheet = getOrCreateBookingsSheet_(ss);
-
-    if (action === 'clearWeek' && weekStart) {
-      clearWeekBookings_(bookingsSheet, weekStart);
-    } else if (action === 'replaceWeek' && weekStart) {
-      clearWeekBookings_(bookingsSheet, weekStart);
-      addSlotsToBookings_(bookingsSheet, weekStart, slots);
-    } else if (action === 'add' && weekStart && carerName && slots.length > 0) {
-      var mapped = slots.map(function(s) {
-        return { day: s.day, slot: s.slot, carerName: carerName };
-      });
-      addSlotsToBookings_(bookingsSheet, weekStart, mapped);
-    } else if (action === 'remove' && weekStart && slots.length > 0) {
-      removeSlotsFromBookings_(bookingsSheet, weekStart, carerName, slots);
-    }
-
-    var updatedBookings = getBookingsForWeek_(bookingsSheet, weekStart);
-    if (weekStart) {
-      rebuildWeeklyRotaMatrix_(ss, weekStart, updatedBookings);
-    }
-
-    return jsonOut_({
-      status: 'ok',
-      weekStart: weekStart,
-      bookings: updatedBookings
-    });
-  } catch (err) {
-    return jsonOut_({
-      status: 'error',
-      message: err.toString()
-    });
-  } finally {
-    lock.releaseLock();
+  const payload = JSON.parse(e.postData.contents);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Bookings') || ss.insertSheet('Bookings');
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['WeekKey', 'DayIndex', 'SlotIndex', 'Carer', 'UpdatedAt']);
   }
-}
-
-function getOrCreateBookingsSheet_(ss) {
-  var sheet = ss.getSheetByName('Bookings');
-  if (!sheet) {
-    sheet = ss.insertSheet('Bookings');
-    sheet.appendRow(['WeekStart', 'Date', 'Day', 'Slot', 'Carer', 'UpdatedAt']);
-    sheet.getRange(1, 1, 1, 6).setFontWeight('bold').setBackground('#F2F2F7');
-    sheet.setFrozenRows(1);
-  }
-  return sheet;
-}
-
-function normalizeIso_(val) {
-  if (val instanceof Date) {
-    var y = val.getFullYear();
-    var m = ('0' + (val.getMonth() + 1)).slice(-2);
-    var d = ('0' + val.getDate()).slice(-2);
-    return y + '-' + m + '-' + d;
-  }
-  return String(val || '').trim();
-}
-
-function computeSlotDate_(weekStartIso, dayName) {
-  var days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  var idx = days.indexOf(dayName);
-  if (idx < 0 || !weekStartIso) return weekStartIso;
-  var p = weekStartIso.split('-').map(Number);
-  var dt = new Date(p[0], p[1] - 1, p[2] + idx, 12, 0, 0);
-  return normalizeIso_(dt);
-}
-
-function getBookingsForWeek_(sheet, weekStart) {
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return [];
-  var rows = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
-  var out = [];
-
-  for (var i = 0; i < rows.length; i++) {
-    var w = normalizeIso_(rows[i][0]);
-    var day = String(rows[i][2] || '').trim();
-    var slot = String(rows[i][3] || '').trim();
-    var carer = String(rows[i][4] || '').trim();
-    if (!day || !slot || !carer) continue;
-    if (weekStart && w !== weekStart) continue;
-    out.push({ weekStart: w, day: day, slot: slot, carerName: carer });
-  }
-  return out;
-}
-
-function addSlotsToBookings_(sheet, weekStart, items) {
-  var existing = getBookingsForWeek_(sheet, weekStart);
-  var seen = {};
-  for (var i = 0; i < existing.length; i++) {
-    seen[existing[i].day + '|' + existing[i].slot + '|' + existing[i].carerName.toUpperCase()] = true;
-  }
-
-  var nowIso = new Date().toISOString();
-  var toAppend = [];
-  for (var j = 0; j < items.length; j++) {
-    var day = String(items[j].day || '').trim();
-    var slot = String(items[j].slot || '').trim();
-    var carer = String(items[j].carerName || '').trim();
-    if (!day || !slot || !carer) continue;
-    var key = day + '|' + slot + '|' + carer.toUpperCase();
-    if (!seen[key]) {
-      seen[key] = true;
-      toAppend.push([weekStart, computeSlotDate_(weekStart, day), day, slot, carer, nowIso]);
+  const existing = sheet.getDataRange().getValues();
+  const filtered = [existing[0]];
+  for (let i = 1; i &lt; existing.length; i++) {
+    if (String(existing[i][0]) !== String(payload.weekKey)) {
+      filtered.push(existing[i]);
     }
   }
-
-  if (toAppend.length > 0) {
-    sheet.getRange(sheet.getLastRow() + 1, 1, toAppend.length, 6).setValues(toAppend);
-  }
-}
-
-function removeSlotsFromBookings_(sheet, weekStart, carerName, slots) {
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return;
-  var rows = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
-  var targetCarer = String(carerName || '').trim().toUpperCase();
-  var slotSet = {};
-  for (var s = 0; s < slots.length; s++) {
-    slotSet[String(slots[s].day || '').trim() + '|' + String(slots[s].slot || '').trim()] = true;
-  }
-
-  for (var r = rows.length - 1; r >= 0; r--) {
-    var w = normalizeIso_(rows[r][0]);
-    var day = String(rows[r][2] || '').trim();
-    var slot = String(rows[r][3] || '').trim();
-    var carer = String(rows[r][4] || '').trim().toUpperCase();
-    var carerMatches = !targetCarer || carer === targetCarer;
-    if (w === weekStart && slotSet[day + '|' + slot] && carerMatches) {
-      sheet.deleteRow(r + 2);
-    }
-  }
-}
-
-function clearWeekBookings_(sheet, weekStart) {
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return;
-  var rows = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
-  for (var r = rows.length - 1; r >= 0; r--) {
-    if (normalizeIso_(rows[r][0]) === weekStart) {
-      sheet.deleteRow(r + 2);
-    }
-  }
-}
-
-function rebuildWeeklyRotaMatrix_(ss, weekStart, bookings) {
-  var days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  var slotCodes = [];
-  for (var h = 9; h <= 22; h++) {
-    var hh = ('0' + h).slice(-2);
-    slotCodes.push(hh + ':00');
-    slotCodes.push(hh + ':30');
-  }
-  slotCodes.push('NIGHT');
-
-  var rotaSheet = ss.getSheetByName('Weekly Rota');
-  if (!rotaSheet) {
-    rotaSheet = ss.insertSheet('Weekly Rota');
-  }
-
-  rotaSheet.clearContents();
-  rotaSheet.getRange('A1').setValue('Week Start').setFontWeight('bold');
-  rotaSheet.getRange('B1').setValue(weekStart).setFontWeight('bold');
-
-  var headers = ['Time'].concat(days.map(function(d) {
-    return d + ' (' + computeSlotDate_(weekStart, d) + ')';
-  }));
-  rotaSheet.getRange(3, 1, 1, 8).setValues([headers]).setFontWeight('bold').setBackground('#E5E5EA');
-
-  var cellMap = {};
-  for (var i = 0; i < bookings.length; i++) {
-    var k = bookings[i].day + '|' + bookings[i].slot;
-    if (!cellMap[k]) cellMap[k] = [];
-    cellMap[k].push(bookings[i].carerName);
-  }
-
-  var matrix = [];
-  for (var sIdx = 0; sIdx < slotCodes.length; sIdx++) {
-    var code = slotCodes[sIdx];
-    var row = [code];
-    for (var dIdx = 0; dIdx < days.length; dIdx++) {
-      var names = cellMap[days[dIdx] + '|' + code] || [];
-      row.push(names.join(', '));
-    }
-    matrix.push(row);
-  }
-
-  rotaSheet.getRange(4, 1, slotCodes.length, 8).setValues(matrix);
-  rotaSheet.setFrozenRows(3);
-  rotaSheet.setFrozenColumns(1);
-}
-
-function jsonOut_(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
+  const now = new Date().toISOString();
+  (payload.entries || []).forEach(item =&gt; {
+    filtered.push([payload.weekKey, item.d, item.s, item.carer, now]);
+  });
+  sheet.clearContents();
+  sheet.getRange(1, 1, filtered.length, 5).setValues(filtered);
+  return ContentService.createTextOutput(JSON.stringify({ ok: true }))
     .setMimeType(ContentService.MimeType.JSON);
-}`;
+}</div>
+    </div>
 
-      /* ======================================================================
-         2. Application State
-         ====================================================================== */
-      const state = {
-        weekStart: TODAY_WEEK_START,
-        activeCarer: 'HYE',            // Currently selected carer chip or custom name
-        customNameText: '',
-        selectionDay: null,            // Single day column being selected ('Monday'..'Sunday')
-        selectedRows: new Set(),       // Set of row indices (0..28) on selectionDay
-        selectionAnchorRow: null,      // Anchor row for tap-to-range selection
-        dataByWeek: loadLocalData(),   // { [weekStart]: Array<{ day, slot, carerName }> }
-        sheetUrl: localStorage.getItem(STORAGE_KEY_URL) || '',
-        isSyncing: false,
-        inspectedBlock: null,          // Currently inspected MergedBlock object
-        clearConfirmArmed: false,
+    <div class="sheet-btn-row">
+      <button class="sheet-btn secondary" onclick="copyAppsScript()">Copy Script</button>
+      <button class="sheet-btn primary" onclick="saveAndSyncSheet()">Save & Sync</button>
+    </div>
+    <div class="sheet-btn-row">
+      <button class="sheet-btn secondary" onclick="loadSampleWeek()">Load Sample</button>
+      <button class="sheet-btn danger" onclick="clearCurrentWeek()">Clear Week</button>
+    </div>
+  </div>
+</div>
 
-        // Pointer / Touch Vertical Drag State
-        pointerActive: false,
-        pointerDragged: false,
-        dragDay: null,
-        dragStartRow: null,
-        dragCurrentRow: null
+<div class="toast" id="toast">Saved</div>
+
+<script>
+  const DEFAULT_CARERS = [
+    { name: 'HYE',    bg: '#DBEAFE', fg: '#1E3A8A', border: '#93C5FD' },
+    { name: 'ALIM',   bg: '#D1FAE5', fg: '#065F46', border: '#6EE7B7' },
+    { name: 'BASIT',  bg: '#FEF3C7', fg: '#92400E', border: '#FCD34D' },
+    { name: 'HAFIZ',  bg: '#EDE9FE', fg: '#5B21B6', border: '#C4B5FD' },
+    { name: 'KAYYUM', bg: '#FCE7F3', fg: '#9D174D', border: '#F9A8D4' },
+    { name: 'BISAB',  bg: '#CCFBF1', fg: '#115E59', border: '#5EEAD4' },
+    { name: 'HAL',    bg: '#FFEDD5', fg: '#9A3412', border: '#FDBA74' },
+    { name: 'SOF',    bg: '#E0E7FF', fg: '#3730A3', border: '#A5B4FC' },
+    { name: 'AFFA',   bg: '#FEE2E2', fg: '#991B1B', border: '#FCA5A5' }
+  ];
+
+  const EXTRA_PALETTE = [
+    { bg: '#E0F2FE', fg: '#075985', border: '#7DD3FC' },
+    { bg: '#ECFCCB', fg: '#3F6212', border: '#BEF264' },
+    { bg: '#FAE8FF', fg: '#86198F', border: '#F0ABFC' },
+    { bg: '#F3F4F6', fg: '#1F2937', border: '#D1D5DB' }
+  ];
+
+  // Build 29 slots: 09:00..22:30 (28 half-hours) + NIGHT (index 28)
+  const SLOTS = [];
+  for (let h = 9; h <= 22; h++) {
+    const hh = String(h).padStart(2, '0');
+    SLOTS.push({ index: SLOTS.length, label: `${hh}:00`, shortLabel: `${hh}:00`, isHour: true, isNight: false });
+    SLOTS.push({ index: SLOTS.length, label: `${hh}:30`, shortLabel: `:30`, isHour: false, isNight: false });
+  }
+  SLOTS.push({ index: SLOTS.length, label: 'NIGHT', shortLabel: 'NIGHT', isHour: true, isNight: true });
+
+  const DAY_NAMES = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+  const STORAGE_KEY = 'care_rota_v3_data';
+  const URL_KEY = 'care_rota_v3_webapp_url';
+
+  let currentMonday = getMonday(new Date(2026, 10, 16)); // Mon 16 Nov 2026
+  let activeCarer = 'HYE';
+  let quickTapMode = false;
+  let store = loadStore();
+  let selectedKeys = new Set();
+  let isDragging = false;
+  let dragDay = null;
+  let dragStartSlot = null;
+  let dragMode = 'add';
+  let inspectedBlock = null;
+
+  function getMonday(date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const day = d.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    d.setDate(d.getDate() + diff);
+    return d;
+  }
+
+  function formatWeekKey(monday) {
+    const y = monday.getFullYear();
+    const m = String(monday.getMonth() + 1).padStart(2, '0');
+    const d = String(monday.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function formatWeekLabel(monday) {
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    if (monday.getMonth() === sunday.getMonth()) {
+      return `${monday.getDate()}–${sunday.getDate()} ${months[monday.getMonth()]} ${sunday.getFullYear()}`;
+    }
+    return `${monday.getDate()} ${months[monday.getMonth()]} – ${sunday.getDate()} ${months[sunday.getMonth()]} ${sunday.getFullYear()}`;
+  }
+
+  function loadStore() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveStore() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  }
+
+  function getWeekData() {
+    const wk = formatWeekKey(currentMonday);
+    if (!store[wk]) store[wk] = {};
+    return store[wk];
+  }
+
+  function getCarerStyle(name) {
+    const upper = String(name || '').trim().toUpperCase();
+    const found = DEFAULT_CARERS.find(c => c.name === upper);
+    if (found) return found;
+    let hash = 0;
+    for (let i = 0; i < upper.length; i++) hash = upper.charCodeAt(i) + ((hash << 5) - hash);
+    return EXTRA_PALETTE[Math.abs(hash) % EXTRA_PALETTE.length];
+  }
+
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), 2000);
+  }
+
+  function renderCarerStrip() {
+    const strip = document.getElementById('carerStrip');
+    strip.innerHTML = '';
+    DEFAULT_CARERS.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'carer-chip' + (activeCarer === c.name ? ' active' : '');
+      btn.style.background = c.bg;
+      btn.style.color = c.fg;
+      btn.innerHTML = `<span class="chip-dot"></span>${c.name}`;
+      btn.onclick = () => {
+        activeCarer = c.name;
+        document.getElementById('customCarerInput').value = '';
+        renderCarerStrip();
+        updateActionBar();
       };
+      strip.appendChild(btn);
+    });
+  }
 
-      /* ======================================================================
-         3. DOM References
-         ====================================================================== */
-      const el = {
-        weekRangeLabel: document.getElementById('weekRangeLabel'),
-        exportJpegBtn: document.getElementById('exportJpegBtn'),
-        exportPdfBtn: document.getElementById('exportPdfBtn'),
-        openSheetModalBtn: document.getElementById('openSheetModalBtn'),
-        syncDot: document.getElementById('syncDot'),
-        syncPillText: document.getElementById('syncPillText'),
+  function onCustomNameInput(val) {
+    const clean = val.trim().toUpperCase();
+    if (clean) {
+      activeCarer = clean;
+      document.querySelectorAll('#carerStrip .carer-chip').forEach(el => el.classList.remove('active'));
+      updateActionBar();
+    }
+  }
 
-        prevWeekBtn: document.getElementById('prevWeekBtn'),
-        todayWeekBtn: document.getElementById('todayWeekBtn'),
-        nextWeekBtn: document.getElementById('nextWeekBtn'),
+  function toggleTapMode() {
+    quickTapMode = !quickTapMode;
+    document.getElementById('tapModeIcon').textContent = quickTapMode ? '⚡' : '✋';
+    document.getElementById('tapModeText').textContent = quickTapMode ? '1-Tap' : 'Select';
+    clearSelection();
+    showToast(quickTapMode ? '1-Tap mode: tap any slot to assign' : 'Select mode: tap or drag multiple slots');
+  }
 
-        customNameInput: document.getElementById('customNameInput'),
-        clearCustomBtn: document.getElementById('clearCustomBtn'),
-        carerChipsBar: document.getElementById('carerChipsBar'),
+  function renderHeaderDates() {
+    document.getElementById('weekLabelBtn').textContent = formatWeekLabel(currentMonday);
+    const headGrid = document.getElementById('dayHeaderGrid');
+    headGrid.innerHTML = '<div class="corner-cell">TIME</div>';
+    const today = new Date();
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(currentMonday);
+      date.setDate(currentMonday.getDate() + d);
+      const isToday = date.toDateString() === today.toDateString();
+      const cell = document.createElement('div');
+      cell.className = 'day-head-cell' + (isToday ? ' today' : '');
+      cell.innerHTML = `<div class="day-name">${DAY_NAMES[d]}</div><div class="day-num">${date.getDate()}</div>`;
+      headGrid.appendChild(cell);
+    }
+    const headerH = document.getElementById('topHeader').offsetHeight;
+    headGrid.style.top = headerH + 'px';
+  }
 
-        dayHeadersGrid: document.getElementById('dayHeadersGrid'),
-        rotaBodyGrid: document.getElementById('rotaBodyGrid'),
-
-        totalCoverageSummary: document.getElementById('totalCoverageSummary'),
-        summaryPillsWrap: document.getElementById('summaryPillsWrap'),
-
-        // Slide-up Thumb Action Bar
-        thumbActionBar: document.getElementById('thumbActionBar'),
-        selectionRangeBadge: document.getElementById('selectionRangeBadge'),
-        clearSelectionBtn: document.getElementById('clearSelectionBtn'),
-        removeCareSelectionBtn: document.getElementById('removeCareSelectionBtn'),
-        assignSelectionBtn: document.getElementById('assignSelectionBtn'),
-
-        // Merged Block Inspector Sheet
-        blockInspectorBackdrop: document.getElementById('blockInspectorBackdrop'),
-        inspectorTitle: document.getElementById('inspectorTitle'),
-        inspectorSubtitle: document.getElementById('inspectorSubtitle'),
-        closeInspectorBtn: document.getElementById('closeInspectorBtn'),
-        blockDetailBanner: document.getElementById('blockDetailBanner'),
-        blockDetailName: document.getElementById('blockDetailName'),
-        blockDetailMeta: document.getElementById('blockDetailMeta'),
-        reassignChipsGrid: document.getElementById('reassignChipsGrid'),
-        reassignCustomInput: document.getElementById('reassignCustomInput'),
-        reassignApplyBtn: document.getElementById('reassignApplyBtn'),
-        splitEditBlockBtn: document.getElementById('splitEditBlockBtn'),
-        deleteBlockBtn: document.getElementById('deleteBlockBtn'),
-
-        // Google Sheet Sync Sheet
-        sheetSyncBackdrop: document.getElementById('sheetSyncBackdrop'),
-        closeSyncModalBtn: document.getElementById('closeSyncModalBtn'),
-        copyScriptBtn: document.getElementById('copyScriptBtn'),
-        scriptTextarea: document.getElementById('scriptTextarea'),
-        webAppUrlInput: document.getElementById('webAppUrlInput'),
-        saveAndSyncBtn: document.getElementById('saveAndSyncBtn'),
-        syncNowBtn: document.getElementById('syncNowBtn'),
-        loadSampleBtn: document.getElementById('loadSampleBtn'),
-        clearWeekBtn: document.getElementById('clearWeekBtn'),
-        disconnectUrlBtn: document.getElementById('disconnectUrlBtn'),
-
-        toastPill: document.getElementById('toastPill')
-      };
-
-      /* ======================================================================
-         4. Date, Formatting & Carer Palette Helpers
-         ====================================================================== */
-      function parseIso(isoStr) {
-        const [y, m, d] = isoStr.split('-').map(Number);
-        return new Date(y, m - 1, d, 12, 0, 0, 0);
-      }
-
-      function toIso(dateObj) {
-        const y = dateObj.getFullYear();
-        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const d = String(dateObj.getDate()).padStart(2, '0');
-        return `${y}-${m}-${d}`;
-      }
-
-      function shiftDays(isoStr, delta) {
-        const dt = parseIso(isoStr);
-        dt.setDate(dt.getDate() + delta);
-        return toIso(dt);
-      }
-
-      function formatWeekRangeTitle(weekStartIso) {
-        const start = parseIso(weekStartIso);
-        const end = parseIso(shiftDays(weekStartIso, 6));
-        const sDay = start.getDate();
-        const eDay = end.getDate();
-        const sMon = MONTHS_SHORT[start.getMonth()];
-        const eMon = MONTHS_SHORT[end.getMonth()];
-        const yr = end.getFullYear();
-        return `Mon ${sDay} ${sMon} – Sun ${eDay} ${eMon} ${yr}`;
-      }
-
-      function formatFullDateForDay(weekStartIso, dayIdx) {
-        const dt = parseIso(shiftDays(weekStartIso, dayIdx));
-        return `${DAYS_FULL[dayIdx]}, ${dt.getDate()} ${MONTHS_SHORT[dt.getMonth()]} ${dt.getFullYear()}`;
-      }
-
-      function getCarerPalette(rawName) {
-        const upper = String(rawName || '').trim().toUpperCase();
-        if (SIGNATURE_PALETTES[upper]) {
-          return SIGNATURE_PALETTES[upper];
+  function computeMergedBlocks(weekData) {
+    // Returns array of { day, startSlot, endSlot, carer }
+    const blocks = [];
+    for (let d = 0; d < 7; d++) {
+      let s = 0;
+      while (s < SLOTS.length) {
+        const carer = weekData[`${d}_${s}`];
+        if (!carer) {
+          s++;
+          continue;
         }
-        let hash = 2166136261;
-        for (let i = 0; i < upper.length; i++) {
-          hash ^= upper.charCodeAt(i);
-          hash = Math.imul(hash, 16777619);
-        }
-        return EXTRA_PALETTES[Math.abs(hash) % EXTRA_PALETTES.length];
-      }
-
-      let toastTimer = null;
-      function showToast(msg) {
-        el.toastPill.textContent = msg;
-        el.toastPill.classList.add('show');
-        if (toastTimer) clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => {
-          el.toastPill.classList.remove('show');
-        }, 2500);
-      }
-
-      /* ======================================================================
-         5. Local Storage & Schedule Data Management
-         ====================================================================== */
-      function loadLocalData() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY_DATA);
-          const parsed = raw ? JSON.parse(raw) : {};
-          return (parsed && typeof parsed === 'object') ? parsed : {};
-        } catch (err) {
-          return {};
-        }
-      }
-
-      function saveLocalData() {
-        try {
-          localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(state.dataByWeek));
-        } catch (err) {
-          // Ignore quota warnings
-        }
-      }
-
-      function getWeekBookings(weekStart = state.weekStart) {
-        const arr = state.dataByWeek[weekStart];
-        return Array.isArray(arr) ? arr : [];
-      }
-
-      function setWeekBookings(weekStart, bookings) {
-        const seen = new Set();
-        const clean = [];
-        for (const item of (bookings || [])) {
-          const day = String(item.day || '').trim();
-          const slot = String(item.slot || '').trim();
-          const carerName = String(item.carerName || '').trim();
-          if (!DAYS_FULL.includes(day) || !CODE_TO_ROW.has(slot) || !carerName) continue;
-          const k = `${day}|${slot}|${carerName.toUpperCase()}`;
-          if (!seen.has(k)) {
-            seen.add(k);
-            clean.push({ day, slot, carerName });
+        // Keep NIGHT (index 28) distinct or merge contiguous daytime slots
+        let end = s;
+        if (!SLOTS[s].isNight) {
+          while (end + 1 < SLOTS.length && !SLOTS[end + 1].isNight && weekData[`${d}_${end + 1}`] === carer) {
+            end++;
           }
         }
-        state.dataByWeek[weekStart] = clean;
-        saveLocalData();
+        blocks.push({ day: d, startSlot: s, endSlot: end, carer });
+        s = end + 1;
       }
+    }
+    return blocks;
+  }
 
-      /* ======================================================================
-         6. Contiguous Slot Merging Engine (Turns Multiple Hours/Half-Hours into ONE Block)
-         ====================================================================== */
-      function getRowTopPx(rowIndex) {
-        return rowIndex * 26;
+  function slotRangeText(startSlot, endSlot) {
+    if (SLOTS[startSlot].isNight) return '23:00–09:00';
+    const startLbl = SLOTS[startSlot].label;
+    const endIdx = endSlot + 1;
+    const endLbl = endIdx < 28 ? SLOTS[endIdx].label : '23:00';
+    return `${startLbl}–${endLbl}`;
+  }
+
+  function renderSchedule() {
+    renderHeaderDates();
+    const grid = document.getElementById('scheduleGrid');
+    grid.innerHTML = '';
+    const weekData = getWeekData();
+    const blocks = computeMergedBlocks(weekData);
+    const blockStartMap = new Map();
+    blocks.forEach(b => blockStartMap.set(`${b.day}_${b.startSlot}`, b));
+
+    SLOTS.forEach((slot, sIdx) => {
+      // Time label column
+      const tCell = document.createElement('div');
+      tCell.className = 'time-cell ' + (slot.isNight ? 'night-row' : (slot.isHour ? 'hour-start' : 'half-hour'));
+      if (slot.isNight) {
+        tCell.innerHTML = `<span class="night-title">NIGHT</span><span class="night-sub">23–09</span>`;
+      } else {
+        tCell.textContent = slot.shortLabel;
       }
+      grid.appendChild(tCell);
 
-      function getRowHeightPx(rowIndex) {
-        return rowIndex === 28 ? 52 : 26;
-      }
+      // 7 day columns
+      for (let d = 0; d < 7; d++) {
+        const key = `${d}_${sIdx}`;
+        const cell = document.createElement('div');
+        cell.className = 'slot-cell ' +
+          (slot.isNight ? 'night-row ' : (slot.isHour ? 'hour-start ' : 'half-hour ')) +
+          (d === 6 ? 'last-col ' : '') +
+          (selectedKeys.has(key) ? 'selected' : '');
+        cell.dataset.day = d;
+        cell.dataset.slot = sIdx;
 
-      function formatSpanMetadata(startRow, endRow) {
-        const firstSlot = TIME_SLOTS[startRow];
-        const lastSlot = TIME_SLOTS[endRow];
-        const includesNight = endRow === 28;
-        const onlyNight = startRow === 28 && endRow === 28;
+        // Pointer / Touch handlers for vertical multi-slot selection
+        cell.addEventListener('pointerdown', (e) => handleCellPointerDown(e, d, sIdx));
+        cell.addEventListener('pointerenter', () => handleCellPointerEnter(d, sIdx));
 
-        let daytimeHrs = 0;
-        for (let r = startRow; r <= endRow; r++) {
-          if (r < 28) daytimeHrs += 0.5;
-        }
+        // Render merged shift block at its starting slot
+        const blk = blockStartMap.get(key);
+        if (blk) {
+          const style = getCarerStyle(blk.carer);
+          const count = blk.endSlot - blk.startSlot + 1;
+          const heightPx = slot.isNight ? 50 : (count * 24 - 3);
+          const blockEl = document.createElement('div');
+          blockEl.className = 'shift-block';
+          blockEl.style.height = heightPx + 'px';
+          blockEl.style.background = style.bg;
+          blockEl.style.color = style.fg;
+          blockEl.style.borderColor = style.border;
 
-        let timeSpanText = '';
-        if (onlyNight) {
-          timeSpanText = '23:00–09:00';
-        } else if (includesNight) {
-          timeSpanText = `${firstSlot.startTime}–Night`;
-        } else {
-          timeSpanText = `${firstSlot.startTime}–${lastSlot.endTime}`;
-        }
-
-        let durationText = '';
-        if (onlyNight) {
-          durationText = 'Night Shift';
-        } else if (includesNight) {
-          durationText = `${daytimeHrs.toFixed(1)}h + Night`;
-        } else {
-          durationText = `${daytimeHrs.toFixed(1)}h`;
-        }
-
-        return { timeSpanText, durationText, daytimeHrs, includesNight, onlyNight };
-      }
-
-      /**
-       * Merges contiguous rows belonging to the same carer on a given day into ONE block.
-       * Also assigns lane index/count if two different carers overlap on the same slot.
-       */
-      function computeMergedBlocksForDay(dayName, bookings = getWeekBookings()) {
-        // Build map of rowIndex -> array of carerNames
-        const rowCarers = Array.from({ length: 29 }, () => []);
-        for (const b of bookings) {
-          if (b.day !== dayName) continue;
-          const rIdx = CODE_TO_ROW.get(b.slot);
-          if (rIdx !== undefined) {
-            rowCarers[rIdx].push(b.carerName);
-          }
-        }
-
-        // Collect unique carers active on this day in order of first appearance
-        const carerOrder = [];
-        const seenUpper = new Set();
-        for (let r = 0; r < 29; r++) {
-          for (const name of rowCarers[r]) {
-            const up = name.toUpperCase();
-            if (!seenUpper.has(up)) {
-              seenUpper.add(up);
-              carerOrder.push(name);
-            }
-          }
-        }
-
-        // For each carer, merge contiguous rows into single blocks
-        const blocks = [];
-        for (const carerName of carerOrder) {
-          const targetUpper = carerName.toUpperCase();
-          let runStart = null;
-
-          for (let r = 0; r <= 29; r++) {
-            const hasCarer = r < 29 && rowCarers[r].some((n) => n.toUpperCase() === targetUpper);
-            if (hasCarer && runStart === null) {
-              runStart = r;
-            } else if (!hasCarer && runStart !== null) {
-              const runEnd = r - 1;
-              const meta = formatSpanMetadata(runStart, runEnd);
-              blocks.push({
-                id: `${dayName}|${runStart}|${runEnd}|${targetUpper}`,
-                day: dayName,
-                carerName,
-                startRow: runStart,
-                endRow: runEnd,
-                rowCount: runEnd - runStart + 1,
-                ...meta,
-                laneIndex: 0,
-                laneCount: 1
-              });
-              runStart = null;
-            }
-          }
-        }
-
-        // Sort blocks by startRow then endRow
-        blocks.sort((a, b) => a.startRow - b.startRow || b.endRow - a.endRow);
-
-        // Compute horizontal lanes if two different carers overlap on any shared row
-        for (let i = 0; i < blocks.length; i++) {
-          const overlapping = [blocks[i]];
-          for (let j = 0; j < blocks.length; j++) {
-            if (i === j) continue;
-            const overlap = blocks[i].startRow <= blocks[j].endRow && blocks[j].startRow <= blocks[i].endRow;
-            if (overlap) overlapping.push(blocks[j]);
-          }
-          if (overlapping.length > 1) {
-            overlapping.sort((a, b) => a.id.localeCompare(b.id));
-            blocks[i].laneCount = overlapping.length;
-            blocks[i].laneIndex = overlapping.findIndex((b) => b.id === blocks[i].id);
-          }
-        }
-
-        return blocks;
-      }
-
-      /* ======================================================================
-         7. Google Sheet Sync Engine (doGet & doPost via text/plain)
-         ====================================================================== */
-      function updateSyncBadge() {
-        const connected = Boolean(state.sheetUrl);
-        el.syncDot.className = 'sync-dot';
-        if (state.isSyncing) {
-          el.syncDot.classList.add('syncing');
-          el.syncPillText.textContent = 'Syncing';
-        } else if (connected) {
-          el.syncDot.classList.add('synced');
-          el.syncPillText.textContent = 'Synced';
-        } else {
-          el.syncDot.classList.add('local');
-          el.syncPillText.textContent = 'Local';
-        }
-      }
-
-      async function fetchWeekFromSheet(weekStart, showFeedback = false) {
-        if (!state.sheetUrl) return;
-        state.isSyncing = true;
-        updateSyncBadge();
-
-        try {
-          const sep = state.sheetUrl.includes('?') ? '&' : '?';
-          const url = `${state.sheetUrl}${sep}weekStart=${encodeURIComponent(weekStart)}&_t=${Date.now()}`;
-          const res = await fetch(url, { method: 'GET', redirect: 'follow' });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-          const json = await res.json();
-          if (json && json.status === 'ok' && Array.isArray(json.bookings)) {
-            setWeekBookings(weekStart, json.bookings);
-            if (state.weekStart === weekStart) {
-              renderAll();
-            }
-            if (showFeedback) showToast('Synced with Google Sheet');
-          } else {
-            throw new Error((json && json.message) || 'Invalid Sheet response');
-          }
-        } catch (err) {
-          if (showFeedback) showToast('Offline/Local mode — check Web App URL');
-        } finally {
-          state.isSyncing = false;
-          updateSyncBadge();
-        }
-      }
-
-      async function pushMutationToSheet(payload) {
-        if (!state.sheetUrl) return;
-        state.isSyncing = true;
-        updateSyncBadge();
-
-        try {
-          const res = await fetch(state.sheetUrl, {
-            method: 'POST',
-            redirect: 'follow',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
-          });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-          const json = await res.json();
-          if (json && json.status === 'ok' && Array.isArray(json.bookings)) {
-            setWeekBookings(payload.weekStart, json.bookings);
-            if (state.weekStart === payload.weekStart) {
-              renderAll();
-            }
-          }
-        } catch (err) {
-          showToast('Saved locally — Sheet sync pending');
-        } finally {
-          state.isSyncing = false;
-          updateSyncBadge();
-        }
-      }
-
-      /* ======================================================================
-         8. Schedule Mutation Actions (Assign, Remove, Reassign, Delete, Sample)
-         ====================================================================== */
-      function assignCarerToSelection() {
-        const carerName = state.activeCarer.trim();
-        if (!carerName) {
-          el.customNameInput.focus();
-          showToast('Select or type a carer name first');
-          return;
-        }
-        if (!state.selectionDay || state.selectedRows.size === 0) return;
-
-        const day = state.selectionDay;
-        const sortedRows = Array.from(state.selectedRows).sort((a, b) => a - b);
-        const slotsPayload = sortedRows.map((r) => ({ day, slot: TIME_SLOTS[r].code }));
-
-        const weekStart = state.weekStart;
-        const current = getWeekBookings().slice();
-        const existing = new Set(current.map((b) => `${b.day}|${b.slot}|${b.carerName.toUpperCase()}`));
-
-        // Replace any other carer on those selected slots so blocks stay clean and merged
-        const selectedCodes = new Set(slotsPayload.map((s) => s.slot));
-        const filtered = current.filter((b) => !(b.day === day && selectedCodes.has(b.slot)));
-
-        for (const sp of slotsPayload) {
-          filtered.push({ day: sp.day, slot: sp.slot, carerName });
-        }
-
-        setWeekBookings(weekStart, filtered);
-        clearActiveSelection();
-        renderAll();
-
-        if (state.sheetUrl) {
-          // Remove old slot owners on those slots then add new carer
-          pushMutationToSheet({
-            action: 'replaceWeek',
-            weekStart,
-            slots: getWeekBookings(weekStart)
-          });
-        }
-
-        const meta = formatSpanMetadata(sortedRows[0], sortedRows[sortedRows.length - 1]);
-        showToast(`Assigned ${carerName} (${day.slice(0, 3)} ${meta.timeSpanText})`);
-      }
-
-      function removeCareFromSelection() {
-        if (!state.selectionDay || state.selectedRows.size === 0) return;
-        const day = state.selectionDay;
-        const selectedCodes = new Set(Array.from(state.selectedRows).map((r) => TIME_SLOTS[r].code));
-        const weekStart = state.weekStart;
-
-        const current = getWeekBookings();
-        const next = current.filter((b) => !(b.day === day && selectedCodes.has(b.slot)));
-
-        setWeekBookings(weekStart, next);
-        clearActiveSelection();
-        renderAll();
-
-        if (state.sheetUrl) {
-          pushMutationToSheet({
-            action: 'remove',
-            weekStart,
-            carerName: '',
-            slots: Array.from(selectedCodes).map((slot) => ({ day, slot }))
-          });
-        }
-        showToast('Removed care from selected slots');
-      }
-
-      function deleteMergedBlock(block) {
-        if (!block) return;
-        const weekStart = state.weekStart;
-        const codesToRemove = new Set();
-        for (let r = block.startRow; r <= block.endRow; r++) {
-          codesToRemove.add(TIME_SLOTS[r].code);
-        }
-
-        const current = getWeekBookings();
-        const next = current.filter(
-          (b) => !(b.day === block.day && codesToRemove.has(b.slot) && b.carerName.toUpperCase() === block.carerName.toUpperCase())
-        );
-
-        setWeekBookings(weekStart, next);
-        closeBlockInspector();
-        renderAll();
-
-        if (state.sheetUrl) {
-          pushMutationToSheet({
-            action: 'remove',
-            weekStart,
-            carerName: block.carerName,
-            slots: Array.from(codesToRemove).map((slot) => ({ day: block.day, slot }))
-          });
-        }
-        showToast(`Deleted ${block.carerName} (${block.timeSpanText})`);
-      }
-
-      function reassignMergedBlock(block, newCarerRaw) {
-        const newCarer = String(newCarerRaw || '').trim();
-        if (!block || !newCarer) return;
-
-        const weekStart = state.weekStart;
-        const codes = new Set();
-        for (let r = block.startRow; r <= block.endRow; r++) {
-          codes.add(TIME_SLOTS[r].code);
-        }
-
-        const current = getWeekBookings();
-        const next = current.map((b) => {
-          if (b.day === block.day && codes.has(b.slot) && b.carerName.toUpperCase() === block.carerName.toUpperCase()) {
-            return { day: b.day, slot: b.slot, carerName: newCarer };
-          }
-          return b;
-        });
-
-        setWeekBookings(weekStart, next);
-        selectActiveCarer(newCarer);
-        closeBlockInspector();
-        renderAll();
-
-        if (state.sheetUrl) {
-          pushMutationToSheet({
-            action: 'replaceWeek',
-            weekStart,
-            slots: getWeekBookings(weekStart)
-          });
-        }
-        showToast(`Reassigned to ${newCarer}`);
-      }
-
-      function loadSampleRota() {
-        const sample = [
-          // Monday
-          { day: 'Monday', slot: '09:00', carerName: 'HYE' },
-          { day: 'Monday', slot: '09:30', carerName: 'HYE' },
-          { day: 'Monday', slot: '10:00', carerName: 'HYE' },
-          { day: 'Monday', slot: '10:30', carerName: 'HYE' },
-          { day: 'Monday', slot: '12:00', carerName: 'ALIM' },
-          { day: 'Monday', slot: '12:30', carerName: 'ALIM' },
-          { day: 'Monday', slot: '13:00', carerName: 'ALIM' },
-          { day: 'Monday', slot: '17:00', carerName: 'BASIT' },
-          { day: 'Monday', slot: '17:30', carerName: 'BASIT' },
-          { day: 'Monday', slot: '18:00', carerName: 'BASIT' },
-          { day: 'Monday', slot: 'NIGHT', carerName: 'HAFIZ' },
-          // Tuesday
-          { day: 'Tuesday', slot: '09:00', carerName: 'KAYYUM' },
-          { day: 'Tuesday', slot: '09:30', carerName: 'KAYYUM' },
-          { day: 'Tuesday', slot: '10:00', carerName: 'KAYYUM' },
-          { day: 'Tuesday', slot: '14:00', carerName: 'BISAB' },
-          { day: 'Tuesday', slot: '14:30', carerName: 'BISAB' },
-          { day: 'Tuesday', slot: '15:00', carerName: 'BISAB' },
-          { day: 'Tuesday', slot: '15:30', carerName: 'BISAB' },
-          { day: 'Tuesday', slot: 'NIGHT', carerName: 'HAL' },
-          // Wednesday
-          { day: 'Wednesday', slot: '09:00', carerName: 'SOF' },
-          { day: 'Wednesday', slot: '09:30', carerName: 'SOF' },
-          { day: 'Wednesday', slot: '10:00', carerName: 'SOF' },
-          { day: 'Wednesday', slot: '11:00', carerName: 'AFFA' },
-          { day: 'Wednesday', slot: '11:30', carerName: 'AFFA' },
-          { day: 'Wednesday', slot: '18:00', carerName: 'HYE' },
-          { day: 'Wednesday', slot: '18:30', carerName: 'HYE' },
-          { day: 'Wednesday', slot: '19:00', carerName: 'HYE' },
-          { day: 'Wednesday', slot: 'NIGHT', carerName: 'ALIM' },
-          // Thursday
-          { day: 'Thursday', slot: '09:00', carerName: 'BASIT' },
-          { day: 'Thursday', slot: '09:30', carerName: 'BASIT' },
-          { day: 'Thursday', slot: '13:00', carerName: 'HAFIZ' },
-          { day: 'Thursday', slot: '13:30', carerName: 'HAFIZ' },
-          { day: 'Thursday', slot: '14:00', carerName: 'HAFIZ' },
-          { day: 'Thursday', slot: 'NIGHT', carerName: 'KAYYUM' },
-          // Friday
-          { day: 'Friday', slot: '09:00', carerName: 'BISAB' },
-          { day: 'Friday', slot: '09:30', carerName: 'BISAB' },
-          { day: 'Friday', slot: '10:00', carerName: 'BISAB' },
-          { day: 'Friday', slot: '16:00', carerName: 'HAL' },
-          { day: 'Friday', slot: '16:30', carerName: 'HAL' },
-          { day: 'Friday', slot: '17:00', carerName: 'HAL' },
-          { day: 'Friday', slot: 'NIGHT', carerName: 'SOF' },
-          // Saturday & Sunday
-          { day: 'Saturday', slot: '10:00', carerName: 'AFFA' },
-          { day: 'Saturday', slot: '10:30', carerName: 'AFFA' },
-          { day: 'Saturday', slot: '11:00', carerName: 'AFFA' },
-          { day: 'Saturday', slot: '11:30', carerName: 'AFFA' },
-          { day: 'Saturday', slot: 'NIGHT', carerName: 'HYE' },
-          { day: 'Sunday', slot: '10:00', carerName: 'ALIM' },
-          { day: 'Sunday', slot: '10:30', carerName: 'ALIM' },
-          { day: 'Sunday', slot: '11:00', carerName: 'ALIM' },
-          { day: 'Sunday', slot: 'NIGHT', carerName: 'BASIT' }
-        ];
-
-        setWeekBookings(state.weekStart, sample);
-        clearActiveSelection();
-        renderAll();
-        if (state.sheetUrl) {
-          pushMutationToSheet({ action: 'replaceWeek', weekStart: state.weekStart, slots: sample });
-        }
-        showToast('Sample weekly care rota loaded');
-      }
-
-      /* ======================================================================
-         9. Render Carer Chips, 8-Column Grid, Merged Blocks & Summary
-         ====================================================================== */
-      function selectActiveCarer(name, fromCustomInput = false) {
-        const clean = String(name || '').trim();
-        state.activeCarer = clean;
-        if (!fromCustomInput) {
-          const isDefault = DEFAULT_CARERS.includes(clean.toUpperCase());
-          if (isDefault) {
-            state.customNameText = '';
-            el.customNameInput.value = '';
-          } else {
-            state.customNameText = clean;
-            el.customNameInput.value = clean;
-          }
-        }
-        el.clearCustomBtn.classList.toggle('visible', el.customNameInput.value.length > 0);
-        renderCarerChips();
-        updateThumbActionBar();
-      }
-
-      function renderCarerChips() {
-        const activeUpper = state.activeCarer.trim().toUpperCase();
-        const frag = document.createDocumentFragment();
-
-        for (const name of DEFAULT_CARERS) {
-          const pal = getCarerPalette(name);
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'carer-chip';
-          if (activeUpper === name) btn.classList.add('is-active');
-          btn.style.backgroundColor = pal.bg;
-          btn.style.borderColor = pal.border;
-          btn.style.color = pal.text;
-
-          const dot = document.createElement('span');
-          dot.className = 'carer-chip-dot';
-          dot.style.backgroundColor = pal.accent;
-
-          const label = document.createElement('span');
-          label.textContent = name;
-
-          btn.appendChild(dot);
-          btn.appendChild(label);
-          btn.addEventListener('click', () => selectActiveCarer(name, false));
-          frag.appendChild(btn);
-        }
-
-        el.carerChipsBar.innerHTML = '';
-        el.carerChipsBar.appendChild(frag);
-      }
-
-      function renderDayHeaders() {
-        el.weekRangeLabel.textContent = formatWeekRangeTitle(state.weekStart);
-        el.todayWeekBtn.classList.toggle('is-today', state.weekStart === TODAY_WEEK_START);
-
-        const frag = document.createDocumentFragment();
-        const corner = document.createElement('div');
-        corner.className = 'time-corner-cell';
-        corner.textContent = 'TIME';
-        frag.appendChild(corner);
-
-        for (let d = 0; d < 7; d++) {
-          const dayIso = shiftDays(state.weekStart, d);
-          const dateNum = parseIso(dayIso).getDate();
-          const cell = document.createElement('div');
-          cell.className = 'day-hdr-cell';
-          if (d >= 5) cell.classList.add('is-weekend');
-          if (dayIso === TODAY_ISO) cell.classList.add('is-today');
-
-          cell.innerHTML = `
-            <span class="day-hdr-abbr">${DAYS_SHORT[d]}</span>
-            <span class="day-hdr-num">${dateNum}</span>
+          const showSpan = count >= 2 || slot.isNight;
+          blockEl.innerHTML = `
+            <span class="shift-name">${blk.carer}</span>
+            ${showSpan ? `<span class="shift-span">${slotRangeText(blk.startSlot, blk.endSlot)}</span>` : ''}
           `;
-          frag.appendChild(cell);
-        }
-
-        el.dayHeadersGrid.innerHTML = '';
-        el.dayHeadersGrid.appendChild(frag);
-      }
-
-      function renderScheduleGrid() {
-        const bookings = getWeekBookings();
-        const frag = document.createDocumentFragment();
-
-        // 1. Left 40px Time Axis Column
-        const timeAxis = document.createElement('div');
-        timeAxis.className = 'time-axis-col';
-
-        for (const slot of TIME_SLOTS) {
-          const lbl = document.createElement('div');
-          lbl.className = 'time-label-cell';
-          if (slot.isHour) {
-            lbl.classList.add('is-hour');
-            lbl.textContent = slot.axisLabel;
-          } else if (slot.isHalf) {
-            lbl.classList.add('is-half');
-            lbl.textContent = slot.axisLabel;
-          } else if (slot.isNight) {
-            lbl.classList.add('is-night');
-            lbl.innerHTML = `
-              <span class="night-axis-badge">NIGHT</span>
-              <span class="night-axis-sub">23–09</span>
-            `;
-          }
-          timeAxis.appendChild(lbl);
-        }
-        frag.appendChild(timeAxis);
-
-        // 2. 7 Day Columns (each containing 29 background slot cells + merged blocks overlay)
-        for (let d = 0; d < 7; d++) {
-          const dayName = DAYS_FULL[d];
-          const dayCol = document.createElement('div');
-          dayCol.className = 'day-column';
-          if (d >= 5) dayCol.classList.add('is-weekend');
-          dayCol.dataset.day = dayName;
-
-          // Background interactive cells
-          for (const slot of TIME_SLOTS) {
-            const cell = document.createElement('div');
-            cell.className = 'slot-bg-cell';
-            if (slot.isHour) cell.classList.add('is-hour');
-            else if (slot.isHalf) cell.classList.add('is-half');
-            else if (slot.isNight) cell.classList.add('is-night');
-
-            if (state.selectionDay === dayName && state.selectedRows.has(slot.index)) {
-              cell.classList.add('is-selected');
+          blockEl.addEventListener('pointerdown', (e) => {
+            if (!quickTapMode && selectedKeys.size === 0) {
+              // Allow dragging across existing blocks if user drags, otherwise tap opens inspector
+              blockEl._downTime = Date.now();
+              blockEl._downY = e.clientY;
             }
-
-            cell.dataset.day = dayName;
-            cell.dataset.row = String(slot.index);
-            dayCol.appendChild(cell);
-          }
-
-          // Foreground merged carer blocks layer
-          const blocksLayer = document.createElement('div');
-          blocksLayer.className = 'merged-blocks-layer';
-
-          const mergedBlocks = computeMergedBlocksForDay(dayName, bookings);
-          for (const blk of mergedBlocks) {
-            const pal = getCarerPalette(blk.carerName);
-            const topPx = getRowTopPx(blk.startRow) + 1.5;
-            const endBottomPx = getRowTopPx(blk.endRow) + getRowHeightPx(blk.endRow);
-            const heightPx = Math.max(20, endBottomPx - getRowTopPx(blk.startRow) - 3);
-
-            const widthPct = 100 / blk.laneCount;
-            const leftPct = blk.laneIndex * widthPct;
-
-            const card = document.createElement('div');
-            card.className = 'merged-block-card';
-            if (blk.includesNight) card.classList.add('is-night-block');
-
-            card.style.top = `${topPx}px`;
-            card.style.height = `${heightPx}px`;
-            card.style.left = `calc(${leftPct}% + 2px)`;
-            card.style.width = `calc(${widthPct}% - 4px)`;
-            card.style.backgroundColor = pal.bg;
-            card.style.borderColor = pal.border;
-            card.style.color = pal.text;
-
-            const nameEl = document.createElement('div');
-            nameEl.className = 'merged-block-name';
-            nameEl.textContent = blk.carerName;
-            card.appendChild(nameEl);
-
-            // Show time span subtitle when block spans 2+ rows or is the double-height NIGHT row
-            if (blk.rowCount >= 2 || blk.onlyNight) {
-              const subEl = document.createElement('div');
-              subEl.className = 'merged-block-time';
-              subEl.textContent = blk.timeSpanText;
-              card.appendChild(subEl);
-            }
-
-            card.addEventListener('click', (ev) => {
-              ev.stopPropagation();
-              openBlockInspector(blk);
-            });
-
-            blocksLayer.appendChild(card);
-          }
-
-          dayCol.appendChild(blocksLayer);
-          frag.appendChild(dayCol);
-        }
-
-        el.rotaBodyGrid.innerHTML = '';
-        el.rotaBodyGrid.appendChild(frag);
-      }
-
-      function computeCarerStats(bookings = getWeekBookings()) {
-        const statsMap = new Map();
-        // Seed the 9 default carers first so order is predictable
-        for (const def of DEFAULT_CARERS) {
-          statsMap.set(def, { name: def, daytimeHrs: 0, nights: 0 });
-        }
-
-        let totalDaytimeHrs = 0;
-        let totalNights = 0;
-
-        for (const b of bookings) {
-          const rIdx = CODE_TO_ROW.get(b.slot);
-          if (rIdx === undefined) continue;
-          const up = b.carerName.toUpperCase();
-          if (!statsMap.has(up)) {
-            statsMap.set(up, { name: b.carerName, daytimeHrs: 0, nights: 0 });
-          }
-          const entry = statsMap.get(up);
-          if (rIdx === 28) {
-            entry.nights += 1;
-            totalNights += 1;
-          } else {
-            entry.daytimeHrs += 0.5;
-            totalDaytimeHrs += 0.5;
-          }
-        }
-
-        return {
-          totalDaytimeHrs,
-          totalNights,
-          perCarer: Array.from(statsMap.values())
-        };
-      }
-
-      function renderWeeklySummary() {
-        const stats = computeCarerStats();
-        el.totalCoverageSummary.textContent = `${stats.totalDaytimeHrs.toFixed(1)} hrs + ${stats.totalNights} Night${stats.totalNights === 1 ? '' : 's'}`;
-
-        el.summaryPillsWrap.innerHTML = '';
-        for (const c of stats.perCarer) {
-          const pal = getCarerPalette(c.name);
-          const badge = document.createElement('span');
-          badge.className = 'summary-carer-badge';
-          badge.style.backgroundColor = pal.bg;
-          badge.style.borderColor = pal.border;
-          badge.style.color = pal.text;
-
-          const nightStr = c.nights > 0 ? ` • ${c.nights}N` : '';
-          badge.textContent = `${c.name}: ${c.daytimeHrs.toFixed(1)}h${nightStr}`;
-          el.summaryPillsWrap.appendChild(badge);
-        }
-      }
-
-      function updateThumbActionBar() {
-        const hasSelection = Boolean(state.selectionDay) && state.selectedRows.size > 0;
-        el.thumbActionBar.classList.toggle('visible', hasSelection);
-        if (!hasSelection) return;
-
-        const dayIdx = DAYS_FULL.indexOf(state.selectionDay);
-        const dayAbbr = DAYS_SHORT[dayIdx] || state.selectionDay.slice(0, 3).toUpperCase();
-        const rows = Array.from(state.selectedRows).sort((a, b) => a - b);
-        const meta = formatSpanMetadata(rows[0], rows[rows.length - 1]);
-
-        el.selectionRangeBadge.textContent = `${dayAbbr} • ${meta.timeSpanText} (${meta.durationText})`;
-
-        const carer = state.activeCarer.trim() || 'Carer';
-        const pal = getCarerPalette(carer);
-        el.assignSelectionBtn.textContent = `Assign to ${carer}`;
-        el.assignSelectionBtn.style.backgroundColor = pal.accent;
-      }
-
-      function renderAll() {
-        renderCarerChips();
-        renderDayHeaders();
-        renderScheduleGrid();
-        renderWeeklySummary();
-        updateThumbActionBar();
-        updateSyncBadge();
-      }
-
-      /* ======================================================================
-         10. Multi-Hour / Half-Hour Selection (Tap, Range Tap, & Vertical Drag)
-         ====================================================================== */
-      function clearActiveSelection() {
-        state.selectionDay = null;
-        state.selectedRows.clear();
-        state.selectionAnchorRow = null;
-        applySelectionClasses();
-        updateThumbActionBar();
-      }
-
-      function applySelectionClasses() {
-        const cells = el.rotaBodyGrid.querySelectorAll('.slot-bg-cell');
-        cells.forEach((cell) => {
-          const isSel =
-            state.selectionDay === cell.dataset.day &&
-            state.selectedRows.has(parseInt(cell.dataset.row, 10));
-          cell.classList.toggle('is-selected', isSel);
-        });
-      }
-
-      function fillRowRange(dayName, r1, r2) {
-        const minR = Math.min(r1, r2);
-        const maxR = Math.max(r1, r2);
-        state.selectionDay = dayName;
-        state.selectedRows.clear();
-        for (let r = minR; r <= maxR; r++) {
-          state.selectedRows.add(r);
-        }
-      }
-
-      function handleGridPointerDown(ev) {
-        if (ev.button !== undefined && ev.button !== 0) return;
-        const cell = ev.target.closest('.slot-bg-cell');
-        if (!cell) return;
-
-        const day = cell.dataset.day;
-        const row = parseInt(cell.dataset.row, 10);
-
-        state.pointerActive = true;
-        state.pointerDragged = false;
-        state.dragDay = day;
-        state.dragStartRow = row;
-        state.dragCurrentRow = row;
-      }
-
-      function handleGridPointerMove(ev) {
-        if (!state.pointerActive || !state.dragDay) return;
-        const target = document.elementFromPoint(ev.clientX, ev.clientY);
-        const cell = target ? target.closest('.slot-bg-cell') : null;
-        if (!cell) return;
-
-        // Lock vertical drag to the starting day column for clean single-column block selection
-        const row = parseInt(cell.dataset.row, 10);
-        if (row !== state.dragCurrentRow) {
-          state.pointerDragged = true;
-          state.dragCurrentRow = row;
-          fillRowRange(state.dragDay, state.dragStartRow, state.dragCurrentRow);
-          applySelectionClasses();
-          updateThumbActionBar();
-        }
-      }
-
-      function handleGridPointerUp() {
-        if (!state.pointerActive) return;
-        const wasDragged = state.pointerDragged;
-        const day = state.dragDay;
-        const row = state.dragStartRow;
-
-        state.pointerActive = false;
-        state.pointerDragged = false;
-
-        if (!wasDragged && day !== null && row !== null) {
-          // Single Tap / Range Tap behavior:
-          if (state.selectionDay === day && state.selectedRows.size > 0) {
-            if (state.selectedRows.size === 1 && state.selectedRows.has(row)) {
-              // Tapping the sole selected cell deselects it
-              clearActiveSelection();
+          });
+          blockEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (selectedKeys.size > 0) {
+              toggleSlotSelection(d, sIdx);
               return;
             }
-            // Tapping another row in the same column extends a continuous range from anchor!
-            const anchor = state.selectionAnchorRow !== null ? state.selectionAnchorRow : row;
-            fillRowRange(day, anchor, row);
-          } else {
-            // Start a fresh selection on this day
-            state.selectionDay = day;
-            state.selectedRows.clear();
-            state.selectedRows.add(row);
-            state.selectionAnchorRow = row;
-          }
-          applySelectionClasses();
-          updateThumbActionBar();
-        } else if (wasDragged && day !== null) {
-          state.selectionAnchorRow = state.dragStartRow;
-        }
-      }
-
-      /* ======================================================================
-         11. Merged Block Inspector Bottom Sheet
-         ====================================================================== */
-      function openBlockInspector(block) {
-        state.inspectedBlock = block;
-        const dayIdx = DAYS_FULL.indexOf(block.day);
-        const pal = getCarerPalette(block.carerName);
-
-        el.inspectorTitle.textContent = `${block.carerName} — Care Block`;
-        el.inspectorSubtitle.textContent = formatFullDateForDay(state.weekStart, dayIdx);
-
-        el.blockDetailBanner.style.backgroundColor = pal.bg;
-        el.blockDetailBanner.style.borderColor = pal.border;
-        el.blockDetailBanner.style.color = pal.text;
-
-        el.blockDetailName.textContent = block.carerName;
-        el.blockDetailMeta.textContent = `${block.timeSpanText} • ${block.durationText}`;
-
-        el.reassignCustomInput.value = '';
-        el.reassignChipsGrid.innerHTML = '';
-
-        for (const name of DEFAULT_CARERS) {
-          const p = getCarerPalette(name);
-          const chip = document.createElement('button');
-          chip.type = 'button';
-          chip.className = 'carer-chip';
-          if (name === block.carerName.toUpperCase()) chip.classList.add('is-active');
-          chip.style.backgroundColor = p.bg;
-          chip.style.borderColor = p.border;
-          chip.style.color = p.text;
-          chip.textContent = name;
-          chip.addEventListener('click', () => reassignMergedBlock(block, name));
-          el.reassignChipsGrid.appendChild(chip);
+            if (quickTapMode) {
+              for (let k = blk.startSlot; k <= blk.endSlot; k++) {
+                delete weekData[`${d}_${k}`];
+              }
+              persistAndSync();
+              renderSchedule();
+              return;
+            }
+            openBlockSheet(blk);
+          });
+          cell.appendChild(blockEl);
         }
 
-        el.blockInspectorBackdrop.classList.add('open');
+        grid.appendChild(cell);
       }
+    });
 
-      function closeBlockInspector() {
-        state.inspectedBlock = null;
-        el.blockInspectorBackdrop.classList.remove('open');
+    renderSummary(weekData);
+    updateActionBar();
+  }
+
+  function handleCellPointerDown(e, d, sIdx) {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (quickTapMode) {
+      const weekData = getWeekData();
+      const key = `${d}_${sIdx}`;
+      if (weekData[key] === activeCarer) {
+        delete weekData[key];
+      } else {
+        weekData[key] = activeCarer;
       }
+      persistAndSync();
+      renderSchedule();
+      return;
+    }
 
-      /* ======================================================================
-         12. High-DPI Weekly Rota Canvas Renderer + JPEG & Pure-JS A4 PDF Export
-         ====================================================================== */
-      function renderWeeklyRotaToExportCanvas() {
-        const W = 1600;
-        const H = 2262; // Exact A4 aspect ratio (1 : 1.414)
-        const canvas = document.createElement('canvas');
-        canvas.width = W;
-        canvas.height = H;
-        const ctx = canvas.getContext('2d');
+    const key = `${d}_${sIdx}`;
+    isDragging = true;
+    dragDay = d;
+    dragStartSlot = sIdx;
+    dragMode = selectedKeys.has(key) ? 'remove' : 'add';
+    if (dragMode === 'add') selectedKeys.add(key);
+    else selectedKeys.delete(key);
+    refreshSelectionUI();
+  }
 
-        // 1. Page Background
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, W, H);
+  function handleCellPointerEnter(d, sIdx) {
+    if (!isDragging || d !== dragDay) return;
+    const minS = Math.min(dragStartSlot, sIdx);
+    const maxS = Math.max(dragStartSlot, sIdx);
+    for (let s = minS; s <= maxS; s++) {
+      const key = `${d}_${s}`;
+      if (dragMode === 'add') selectedKeys.add(key);
+      else selectedKeys.delete(key);
+    }
+    refreshSelectionUI();
+  }
 
-        // 2. Top Poster Header Banner
-        const marginX = 56;
-        const headerTop = 48;
-        ctx.fillStyle = '#1C1C1E';
-        ctx.font = '800 44px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText('Care Rota — Weekly Schedule', marginX, headerTop);
+  window.addEventListener('pointerup', () => {
+    isDragging = false;
+  });
 
-        ctx.fillStyle = '#007AFF';
-        ctx.font = '700 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.fillText(formatWeekRangeTitle(state.weekStart), marginX, headerTop + 56);
+  // Touch move support for finger drag down columns
+  document.getElementById('scheduleGrid').addEventListener('touchmove', (e) => {
+    if (!isDragging || !e.touches.length) return;
+    const touch = e.touches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    const cell = target && target.closest('.slot-cell');
+    if (cell) {
+      const d = Number(cell.dataset.day);
+      const s = Number(cell.dataset.slot);
+      if (d === dragDay) {
+        e.preventDefault();
+        handleCellPointerEnter(d, s);
+      }
+    }
+  }, { passive: false });
 
-        ctx.fillStyle = '#636366';
-        ctx.font = '600 21px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.textAlign = 'right';
-        ctx.fillText('09:00 – 22:30 + NIGHT', W - marginX, headerTop + 14);
+  function toggleSlotSelection(d, sIdx) {
+    const key = `${d}_${sIdx}`;
+    if (selectedKeys.has(key)) selectedKeys.delete(key);
+    else selectedKeys.add(key);
+    refreshSelectionUI();
+  }
 
-        // 3. Grid Geometry (8 columns: 120px Time + 7 equal Day columns)
-        const gridLeft = marginX;
-        const gridTop = 164;
-        const gridWidth = W - marginX * 2; // 1488px
-        const timeColW = 120;
-        const dayColW = (gridWidth - timeColW) / 7; // ~195.4px
-        const dayHeaderH = 68;
-        const slotH = 54;
-        const nightH = 108; // Double height for NIGHT row!
-        const bodyTop = gridTop + dayHeaderH;
-        const bodyH = 28 * slotH + nightH; // 1620px
+  function refreshSelectionUI() {
+    document.querySelectorAll('.slot-cell').forEach(cell => {
+      const key = `${cell.dataset.day}_${cell.dataset.slot}`;
+      cell.classList.toggle('selected', selectedKeys.has(key));
+    });
+    updateActionBar();
+  }
 
-        // Outer Grid Frame
-        ctx.strokeStyle = '#C7C7CC';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(gridLeft, gridTop, gridWidth, dayHeaderH + bodyH);
+  function clearSelection() {
+    selectedKeys.clear();
+    refreshSelectionUI();
+  }
 
-        // Day Header Background
-        ctx.fillStyle = '#F2F2F7';
-        ctx.fillRect(gridLeft, gridTop, gridWidth, dayHeaderH);
+  function updateActionBar() {
+    const bar = document.getElementById('actionBar');
+    const count = selectedKeys.size;
+    if (count === 0) {
+      bar.classList.remove('visible');
+      return;
+    }
+    bar.classList.add('visible');
+    document.getElementById('actionTitle').textContent = `${count} slot${count > 1 ? 's' : ''} selected`;
+    document.getElementById('actionSub').textContent = `Merge & assign to ${activeCarer}`;
+    document.getElementById('assignBtn').textContent = `Assign ${activeCarer}`;
+  }
 
-        // Corner "TIME" Label
-        ctx.fillStyle = '#636366';
-        ctx.font = '800 20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('TIME', gridLeft + timeColW / 2, gridTop + dayHeaderH / 2);
+  function assignSelectedSlots() {
+    if (selectedKeys.size === 0) return;
+    const weekData = getWeekData();
+    selectedKeys.forEach(key => {
+      weekData[key] = activeCarer;
+    });
+    selectedKeys.clear();
+    persistAndSync();
+    renderSchedule();
+    showToast(`Assigned to ${activeCarer}`);
+  }
 
-        // 7 Day Column Headers
-        for (let d = 0; d < 7; d++) {
-          const x = gridLeft + timeColW + d * dayColW;
-          const dt = parseIso(shiftDays(state.weekStart, d));
-          const label = `${DAYS_SHORT[d]} ${dt.getDate()} ${MONTHS_SHORT[dt.getMonth()]}`;
+  function removeSelectedSlots() {
+    if (selectedKeys.size === 0) return;
+    const weekData = getWeekData();
+    selectedKeys.forEach(key => delete weekData[key]);
+    selectedKeys.clear();
+    persistAndSync();
+    renderSchedule();
+    showToast('Cleared selected slots');
+  }
 
-          ctx.fillStyle = '#1C1C1E';
-          ctx.font = '800 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-          ctx.fillText(label, x + dayColW / 2, gridTop + dayHeaderH / 2);
+  function renderSummary(weekData) {
+    const pills = document.getElementById('summaryPills');
+    const totals = {};
+    Object.entries(weekData).forEach(([key, carer]) => {
+      const sIdx = Number(key.split('_')[1]);
+      const hours = SLOTS[sIdx] && SLOTS[sIdx].isNight ? 10 : 0.5;
+      totals[carer] = (totals[carer] || 0) + hours;
+    });
+    const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+    if (entries.length === 0) {
+      pills.innerHTML = `<span class="stat-pill" style="background:#FFF;color:#8E8E93;border:1px solid #E5E5EA;">No shifts assigned yet — tap or drag slots above</span>`;
+      return;
+    }
+    pills.innerHTML = entries.map(([carer, hrs]) => {
+      const st = getCarerStyle(carer);
+      return `<span class="stat-pill" style="background:${st.bg};color:${st.fg};border:1px solid ${st.border};">${carer}: ${hrs}h</span>`;
+    }).join('');
+  }
 
-          // Vertical column divider
-          ctx.strokeStyle = '#D1D1D6';
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.moveTo(x, gridTop);
-          ctx.lineTo(x, bodyTop + bodyH);
-          ctx.stroke();
+  /* Block Inspector */
+  function openBlockSheet(blk) {
+    inspectedBlock = blk;
+    const date = new Date(currentMonday);
+    date.setDate(currentMonday.getDate() + blk.day);
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    document.getElementById('blockSheetTitle').textContent = `${blk.carer} — Care Shift`;
+    document.getElementById('blockSheetDesc').textContent =
+      `${DAY_NAMES[blk.day]} ${date.getDate()} ${months[date.getMonth()]} · ${slotRangeText(blk.startSlot, blk.endSlot)}`;
+
+    const strip = document.getElementById('reassignStrip');
+    strip.innerHTML = '';
+    DEFAULT_CARERS.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'carer-chip' + (c.name === blk.carer ? ' active' : '');
+      btn.style.background = c.bg;
+      btn.style.color = c.fg;
+      btn.textContent = c.name;
+      btn.onclick = () => {
+        const weekData = getWeekData();
+        for (let s = blk.startSlot; s <= blk.endSlot; s++) {
+          weekData[`${blk.day}_${s}`] = c.name;
         }
+        persistAndSync();
+        closeBlockSheet();
+        renderSchedule();
+        showToast(`Reassigned to ${c.name}`);
+      };
+      strip.appendChild(btn);
+    });
+    document.getElementById('blockSheet').classList.add('open');
+  }
 
-        // Horizontal Header Bottom Divider
-        ctx.strokeStyle = '#8E8E93';
-        ctx.lineWidth = 2;
+  function closeBlockSheet() {
+    document.getElementById('blockSheet').classList.remove('open');
+    inspectedBlock = null;
+  }
+
+  function deleteInspectedBlock() {
+    if (!inspectedBlock) return;
+    const weekData = getWeekData();
+    for (let s = inspectedBlock.startSlot; s <= inspectedBlock.endSlot; s++) {
+      delete weekData[`${inspectedBlock.day}_${s}`];
+    }
+    persistAndSync();
+    closeBlockSheet();
+    renderSchedule();
+    showToast('Shift removed');
+  }
+
+  /* Week Navigation */
+  function changeWeek(delta) {
+    clearSelection();
+    currentMonday.setDate(currentMonday.getDate() + delta * 7);
+    renderSchedule();
+    pullFromSheet();
+  }
+
+  function goToday() {
+    clearSelection();
+    currentMonday = getMonday(new Date());
+    renderSchedule();
+    pullFromSheet();
+  }
+
+  /* Google Sheets Sync */
+  function openSyncSheet() {
+    document.getElementById('webAppUrlInput').value = localStorage.getItem(URL_KEY) || '';
+    document.getElementById('syncSheet').classList.add('open');
+  }
+
+  function closeSyncSheet() {
+    document.getElementById('syncSheet').classList.remove('open');
+  }
+
+  function copyAppsScript() {
+    const code = document.getElementById('appsScriptCode').textContent;
+    navigator.clipboard.writeText(code).then(() => showToast('Apps Script copied'));
+  }
+
+  function saveAndSyncSheet() {
+    const url = document.getElementById('webAppUrlInput').value.trim();
+    if (url) localStorage.setItem(URL_KEY, url);
+    else localStorage.removeItem(URL_KEY);
+    closeSyncSheet();
+    persistAndSync();
+  }
+
+  function setSyncBadge(state, text) {
+    const pill = document.getElementById('syncPill');
+    pill.className = 'sync-pill ' + state;
+    document.getElementById('syncStatusText').textContent = text;
+  }
+
+  async function persistAndSync() {
+    saveStore();
+    const url = localStorage.getItem(URL_KEY);
+    if (!url) {
+      setSyncBadge('', 'Local');
+      return;
+    }
+    setSyncBadge('', 'Syncing...');
+    const wk = formatWeekKey(currentMonday);
+    const weekData = getWeekData();
+    const entries = Object.entries(weekData).map(([k, carer]) => {
+      const [d, s] = k.split('_').map(Number);
+      return { d, s, carer };
+    });
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ weekKey: wk, entries })
+      });
+      setSyncBadge('synced', 'Synced');
+    } catch {
+      setSyncBadge('error', 'Offline');
+    }
+  }
+
+  async function pullFromSheet() {
+    const url = localStorage.getItem(URL_KEY);
+    if (!url) {
+      setSyncBadge('', 'Local');
+      return;
+    }
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data && data.ok && Array.isArray(data.rows)) {
+        const grouped = {};
+        data.rows.forEach(([wk, d, s, carer]) => {
+          if (!wk || !carer) return;
+          if (!grouped[wk]) grouped[wk] = {};
+          grouped[wk][`${d}_${s}`] = String(carer).toUpperCase();
+        });
+        Object.assign(store, grouped);
+        saveStore();
+        renderSchedule();
+        setSyncBadge('synced', 'Synced');
+      }
+    } catch {
+      setSyncBadge('error', 'Offline');
+    }
+  }
+
+  function loadSampleWeek() {
+    const wk = formatWeekKey(currentMonday);
+    store[wk] = {
+      '0_0':'HYE','0_1':'HYE','0_2':'HYE','0_3':'HYE','0_4':'HYE','0_5':'HYE',
+      '0_6':'ALIM','0_7':'ALIM','0_8':'ALIM','0_9':'ALIM','0_10':'ALIM','0_11':'ALIM',
+      '0_28':'BASIT',
+      '1_0':'HAFIZ','1_1':'HAFIZ','1_2':'HAFIZ','1_3':'HAFIZ',
+      '1_12':'KAYYUM','1_13':'KAYYUM','1_14':'KAYYUM','1_15':'KAYYUM',
+      '1_28':'BISAB',
+      '2_4':'HAL','2_5':'HAL','2_6':'HAL','2_7':'HAL',
+      '2_16':'SOF','2_17':'SOF','2_18':'SOF','2_19':'SOF',
+      '2_28':'AFFA',
+      '3_0':'HYE','3_1':'HYE','3_2':'HYE','3_3':'HYE',
+      '3_28':'ALIM',
+      '4_8':'BASIT','4_9':'BASIT','4_10':'BASIT','4_11':'BASIT',
+      '4_28':'HAFIZ',
+      '5_2':'KAYYUM','5_3':'KAYYUM','5_4':'KAYYUM','5_5':'KAYYUM',
+      '5_28':'SOF',
+      '6_6':'AFFA','6_7':'AFFA','6_8':'AFFA','6_9':'AFFA',
+      '6_28':'HYE'
+    };
+    persistAndSync();
+    closeSyncSheet();
+    renderSchedule();
+    showToast('Loaded sample week');
+  }
+
+  function clearCurrentWeek() {
+    const wk = formatWeekKey(currentMonday);
+    store[wk] = {};
+    persistAndSync();
+    closeSyncSheet();
+    renderSchedule();
+    showToast('Week cleared');
+  }
+
+  /* High-Resolution Poster Canvas for JPEG & PDF Export */
+  function buildExportCanvas() {
+    const canvas = document.createElement('canvas');
+    const W = 1600;
+    const H = 2120;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, W, H);
+
+    // Header Banner
+    ctx.fillStyle = '#111827';
+    ctx.fillRect(0, 0, W, 130);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '700 44px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('CARE ROTA — WEEKLY SCHEDULE', 56, 66);
+    ctx.fillStyle = '#93C5FD';
+    ctx.font = '600 28px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(`Week: ${formatWeekLabel(currentMonday)}`, 56, 108);
+
+    const marginX = 48;
+    const topY = 156;
+    const timeW = 130;
+    const dayW = (W - marginX * 2 - timeW) / 7;
+    const headH = 68;
+    const rowH = 54;
+    const nightH = 112;
+
+    // Day Headers
+    ctx.fillStyle = '#F3F4F6';
+    ctx.fillRect(marginX, topY, W - marginX * 2, headH);
+    ctx.strokeStyle = '#D1D5DB';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(marginX, topY, W - marginX * 2, headH);
+
+    ctx.fillStyle = '#4B5563';
+    ctx.font = '700 22px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('TIME', marginX + timeW / 2, topY + 42);
+
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(currentMonday);
+      date.setDate(currentMonday.getDate() + d);
+      const cx = marginX + timeW + d * dayW + dayW / 2;
+      ctx.fillStyle = '#111827';
+      ctx.font = '700 24px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText(`${DAY_NAMES[d]} ${date.getDate()}`, cx, topY + 42);
+      ctx.beginPath();
+      ctx.moveTo(marginX + timeW + d * dayW, topY);
+      ctx.lineTo(marginX + timeW + d * dayW, topY + headH);
+      ctx.stroke();
+    }
+
+    // Grid Rows
+    let curY = topY + headH;
+    SLOTS.forEach((slot) => {
+      const h = slot.isNight ? nightH : rowH;
+      if (slot.isNight) {
+        ctx.fillStyle = '#111827';
+        ctx.fillRect(marginX, curY, timeW, h);
+        ctx.fillStyle = '#1E293B';
+        ctx.fillRect(marginX + timeW, curY, W - marginX * 2 - timeW, h);
+        ctx.fillStyle = '#FBBF24';
+        ctx.font = '800 24px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillText('NIGHT', marginX + timeW / 2, curY + 52);
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '600 18px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillText('23:00–09:00', marginX + timeW / 2, curY + 82);
+      } else {
+        ctx.fillStyle = '#F9FAFB';
+        ctx.fillRect(marginX, curY, timeW, h);
+        ctx.fillStyle = slot.isHour ? '#111827' : '#6B7280';
+        ctx.font = (slot.isHour ? '700 22px' : '500 20px') + ' -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillText(slot.shortLabel, marginX + timeW / 2, curY + 35);
+      }
+
+      ctx.strokeStyle = slot.isHour ? '#9CA3AF' : '#E5E7EB';
+      ctx.lineWidth = slot.isHour ? 2 : 1;
+      ctx.beginPath();
+      ctx.moveTo(marginX, curY);
+      ctx.lineTo(W - marginX, curY);
+      ctx.stroke();
+
+      for (let d = 0; d < 7; d++) {
+        ctx.strokeStyle = '#E5E7EB';
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(gridLeft, bodyTop);
-        ctx.lineTo(gridLeft + gridWidth, bodyTop);
+        ctx.moveTo(marginX + timeW + d * dayW, curY);
+        ctx.lineTo(marginX + timeW + d * dayW, curY + h);
         ctx.stroke();
-
-        // 4. Draw 29 Time Rows & Horizontal Dividers
-        for (const slot of TIME_SLOTS) {
-          const y = bodyTop + slot.index * slotH;
-          const h = slot.isNight ? nightH : slotH;
-
-          if (slot.isNight) {
-            // Double-height NIGHT row styling
-            ctx.fillStyle = '#1E1B4B';
-            ctx.fillRect(gridLeft, y, timeColW, h);
-
-            ctx.fillStyle = '#EEF2FF';
-            ctx.fillRect(gridLeft + timeColW, y, gridWidth - timeColW, h);
-
-            ctx.fillStyle = '#FDE68A';
-            ctx.font = '900 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-            ctx.fillText('NIGHT', gridLeft + timeColW / 2, y + h / 2 - 12);
-
-            ctx.fillStyle = '#C7D2FE';
-            ctx.font = '700 16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-            ctx.fillText('23:00–09:00', gridLeft + timeColW / 2, y + h / 2 + 16);
-
-            // Bold Indigo Accent Top Border above NIGHT row
-            ctx.strokeStyle = '#4338CA';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(gridLeft, y);
-            ctx.lineTo(gridLeft + gridWidth, y);
-            ctx.stroke();
-          } else {
-            // Time axis cell background
-            ctx.fillStyle = '#FAFAFC';
-            ctx.fillRect(gridLeft, y, timeColW, h);
-
-            ctx.fillStyle = slot.isHour ? '#1C1C1E' : '#8E8E93';
-            ctx.font = slot.isHour
-              ? '800 20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-              : '600 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-            ctx.fillText(slot.axisLabel, gridLeft + timeColW / 2, y + h / 2);
-
-            // Bottom row border (dashed for :00->:30, solid for :30->next hour)
-            ctx.save();
-            if (slot.isHour) {
-              ctx.setLineDash([6, 6]);
-              ctx.strokeStyle = '#E5E5EA';
-              ctx.lineWidth = 1.2;
-            } else {
-              ctx.strokeStyle = '#C7C7CC';
-              ctx.lineWidth = 1.5;
-            }
-            ctx.beginPath();
-            ctx.moveTo(gridLeft, y + h);
-            ctx.lineTo(gridLeft + gridWidth, y + h);
-            ctx.stroke();
-            ctx.restore();
-          }
-        }
-
-        // 5. Draw Merged Carer Blocks across all 7 Day Columns
-        const bookings = getWeekBookings();
-        for (let d = 0; d < 7; d++) {
-          const dayName = DAYS_FULL[d];
-          const colX = gridLeft + timeColW + d * dayColW;
-          const blocks = computeMergedBlocksForDay(dayName, bookings);
-
-          for (const blk of blocks) {
-            const pal = getCarerPalette(blk.carerName);
-            const blockY = bodyTop + blk.startRow * slotH + 4;
-            const endY = bodyTop + blk.endRow * slotH + (blk.endRow === 28 ? nightH : slotH);
-            const blockH = endY - (bodyTop + blk.startRow * slotH) - 8;
-
-            const laneW = dayColW / blk.laneCount;
-            const bx = colX + blk.laneIndex * laneW + 5;
-            const bw = laneW - 10;
-
-            drawRoundedRect(ctx, bx, blockY, bw, blockH, 10);
-            ctx.fillStyle = pal.bg;
-            ctx.fill();
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = pal.border;
-            ctx.stroke();
-
-            ctx.fillStyle = pal.text;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            if (blk.rowCount >= 2 || blk.onlyNight) {
-              ctx.font = '900 23px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-              ctx.fillText(blk.carerName, bx + bw / 2, blockY + blockH / 2 - 13, bw - 10);
-
-              ctx.font = '700 17px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-              ctx.fillText(blk.timeSpanText, bx + bw / 2, blockY + blockH / 2 + 15, bw - 10);
-            } else {
-              ctx.font = '900 21px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-              ctx.fillText(blk.carerName, bx + bw / 2, blockY + blockH / 2, bw - 10);
-            }
-          }
-        }
-
-        // 6. Weekly Hours Summary Footer
-        const footerTop = bodyTop + bodyH + 34;
-        const stats = computeCarerStats(bookings);
-
-        ctx.fillStyle = '#1C1C1E';
-        ctx.font = '800 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText(
-          `Weekly Hours Summary — Total: ${stats.totalDaytimeHrs.toFixed(1)} hrs + ${stats.totalNights} Night(s)`,
-          marginX,
-          footerTop
-        );
-
-        let chipX = marginX;
-        let chipY = footerTop + 42;
-        const chipH = 42;
-        const chipGap = 14;
-
-        for (const c of stats.perCarer) {
-          const pal = getCarerPalette(c.name);
-          const nightLabel = c.nights > 0 ? ` • ${c.nights}N` : '';
-          const txt = `${c.name}: ${c.daytimeHrs.toFixed(1)}h${nightLabel}`;
-
-          ctx.font = '800 20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-          const tw = ctx.measureText(txt).width;
-          const cw = tw + 34;
-
-          if (chipX + cw > W - marginX) {
-            chipX = marginX;
-            chipY += chipH + 12;
-          }
-
-          drawRoundedRect(ctx, chipX, chipY, cw, chipH, 21);
-          ctx.fillStyle = pal.bg;
-          ctx.fill();
-          ctx.lineWidth = 2;
-          ctx.strokeStyle = pal.border;
-          ctx.stroke();
-
-          ctx.fillStyle = pal.text;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(txt, chipX + cw / 2, chipY + chipH / 2);
-
-          chipX += cw + chipGap;
-        }
-
-        return canvas;
       }
+      curY += h;
+    });
 
-      function drawRoundedRect(ctx, x, y, w, h, r) {
-        const rad = Math.min(r, w / 2, h / 2);
-        ctx.beginPath();
-        ctx.moveTo(x + rad, y);
-        ctx.arcTo(x + w, y, x + w, y + h, rad);
-        ctx.arcTo(x + w, y + h, x, y + h, rad);
-        ctx.arcTo(x, y + h, x, y, rad);
-        ctx.arcTo(x, y, x + w, y, rad);
-        ctx.closePath();
+    // Outer border
+    ctx.strokeStyle = '#9CA3AF';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(marginX, topY + headH, W - marginX * 2, curY - (topY + headH));
+
+    // Merged Shift Blocks
+    const weekData = getWeekData();
+    const blocks = computeMergedBlocks(weekData);
+    blocks.forEach(blk => {
+      const st = getCarerStyle(blk.carer);
+      const isNight = SLOTS[blk.startSlot].isNight;
+      const bx = marginX + timeW + blk.day * dayW + 6;
+      const bw = dayW - 12;
+      const by = isNight
+        ? (topY + headH + 28 * rowH + 8)
+        : (topY + headH + blk.startSlot * rowH + 4);
+      const bh = isNight
+        ? (nightH - 16)
+        : ((blk.endSlot - blk.startSlot + 1) * rowH - 8);
+
+      ctx.fillStyle = st.bg;
+      ctx.strokeStyle = st.border;
+      ctx.lineWidth = 3;
+      roundRect(ctx, bx, by, bw, bh, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = st.fg;
+      ctx.textAlign = 'center';
+      ctx.font = '800 24px -apple-system, BlinkMacSystemFont, sans-serif';
+      const span = slotRangeText(blk.startSlot, blk.endSlot);
+      if (bh >= 70) {
+        ctx.fillText(blk.carer, bx + bw / 2, by + bh / 2 - 4);
+        ctx.font = '600 18px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillText(span, bx + bw / 2, by + bh / 2 + 22);
+      } else {
+        ctx.fillText(blk.carer, bx + bw / 2, by + bh / 2 + 8);
       }
+    });
 
-      function triggerBlobDownload(blob, filename) {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 4000);
-      }
+    return canvas;
+  }
 
-      function exportRotaAsJpeg() {
-        const canvas = renderWeeklyRotaToExportCanvas();
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) return;
-            triggerBlobDownload(blob, `Care-Rota-${state.weekStart}.jpg`);
-            showToast(`Exported Care-Rota-${state.weekStart}.jpg`);
-          },
-          'image/jpeg',
-          0.95
-        );
-      }
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
 
-      /**
-       * Self-contained pure-JS A4 PDF generator embedding the high-DPI JPEG bytes directly.
-       * Zero external library dependencies; works 100% offline & online on mobile Safari/Chrome.
-       */
-      function exportRotaAsPdf() {
-        const canvas = renderWeeklyRotaToExportCanvas();
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-        const base64 = dataUrl.split(',')[1];
-        const binStr = atob(base64);
-        const imgBytes = new Uint8Array(binStr.length);
-        for (let i = 0; i < binStr.length; i++) {
-          imgBytes[i] = binStr.charCodeAt(i);
-        }
+  function exportAsJPEG() {
+    const canvas = buildExportCanvas();
+    const link = document.createElement('a');
+    link.download = `Care-Rota-${formatWeekKey(currentMonday)}.jpg`;
+    link.href = canvas.toDataURL('image/jpeg', 0.94);
+    link.click();
+    showToast('Downloaded JPEG image');
+  }
 
-        const encoder = new TextEncoder();
-        const chunks = [];
-        const offsets = [0];
-        let byteLen = 0;
+  function exportAsPDF() {
+    const canvas = buildExportCanvas();
+    const imgData = canvas.toDataURL('image/jpeg', 0.94);
+    const win = window.open('', '_blank');
+    if (!win) {
+      showToast('Allow pop-ups to export PDF');
+      return;
+    }
+    win.document.write(`<!DOCTYPE html><html><head><title>Care Rota ${formatWeekLabel(currentMonday)}</title>
+      <style>@page{size:A4 portrait;margin:8mm;}body{margin:0;display:flex;justify-content:center;align-items:center;}img{width:100%;max-height:280mm;object-fit:contain;}</style>
+      </head><body><img src="${imgData}" onload="window.print();"/></body></html>`);
+    win.document.close();
+  }
 
-        function pushText(str) {
-          const bytes = encoder.encode(str);
-          chunks.push(bytes);
-          byteLen += bytes.length;
-        }
-
-        function pushBinary(u8) {
-          chunks.push(u8);
-          byteLen += u8.length;
-        }
-
-        pushText('%PDF-1.4\n');
-
-        // Object 1: Catalog
-        offsets.push(byteLen);
-        pushText('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
-
-        // Object 2: Pages
-        offsets.push(byteLen);
-        pushText('2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
-
-        // Object 3: A4 Page (595.28 x 841.89 pt)
-        offsets.push(byteLen);
-        pushText(
-          '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] ' +
-          '/Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n'
-        );
-
-        // Object 4: Embedded JPEG Image XObject
-        offsets.push(byteLen);
-        pushText(
-          `4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${canvas.width} /Height ${canvas.height} ` +
-          `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imgBytes.length} >>\nstream\n`
-        );
-        pushBinary(imgBytes);
-        pushText('\nendstream\nendobj\n');
-
-        // Object 5: Draw Image Full A4 Page
-        const contentStream = 'q 595.28 0 0 841.89 0 0 cm /Im0 Do Q\n';
-        offsets.push(byteLen);
-        pushText(`5 0 obj\n<< /Length ${contentStream.length} >>\nstream\n${contentStream}endstream\nendobj\n`);
-
-        // Cross-reference table
-        const xrefStart = byteLen;
-        pushText(`xref\n0 ${offsets.length}\n`);
-        pushText('0000000000 65535 f \n');
-        for (let i = 1; i < offsets.length; i++) {
-          pushText(`${String(offsets[i]).padStart(10, '0')} 00000 n \n`);
-        }
-
-        pushText(`trailer\n<< /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`);
-
-        const pdfBlob = new Blob(chunks, { type: 'application/pdf' });
-        triggerBlobDownload(pdfBlob, `Care-Rota-${state.weekStart}.pdf`);
-        showToast(`Exported Care-Rota-${state.weekStart}.pdf`);
-      }
-
-      /* ======================================================================
-         13. Google Sheet Sync Modal Controls & Clipboard
-         ====================================================================== */
-      function openSheetSyncModal() {
-        el.scriptTextarea.value = GOOGLE_APPS_SCRIPT;
-        el.webAppUrlInput.value = state.sheetUrl;
-        el.disconnectUrlBtn.style.display = state.sheetUrl ? 'block' : 'none';
-        state.clearConfirmArmed = false;
-        el.clearWeekBtn.textContent = 'Clear Week';
-        el.sheetSyncBackdrop.classList.add('open');
-      }
-
-      function closeSheetSyncModal() {
-        el.sheetSyncBackdrop.classList.remove('open');
-      }
-
-      function copyAppsScript() {
-        const area = el.scriptTextarea;
-        area.value = GOOGLE_APPS_SCRIPT;
-        area.focus();
-        area.select();
-        area.setSelectionRange(0, GOOGLE_APPS_SCRIPT.length);
-
-        let copied = false;
-        try {
-          copied = document.execCommand('copy');
-        } catch (err) {
-          copied = false;
-        }
-
-        if (copied) {
-          el.copyScriptBtn.classList.add('copied');
-          el.copyScriptBtn.textContent = 'Copied!';
-          showToast('Apps Script copied to clipboard');
-          setTimeout(() => {
-            el.copyScriptBtn.classList.remove('copied');
-            el.copyScriptBtn.textContent = 'Copy Apps Script Code';
-          }, 2200);
-        } else {
-          showToast('Select and copy the script code manually');
-        }
-      }
-
-      /* ======================================================================
-         14. Bind All Event Listeners
-         ====================================================================== */
-      function bindEvents() {
-        // Week Navigation
-        el.prevWeekBtn.addEventListener('click', () => {
-          state.weekStart = shiftDays(state.weekStart, -7);
-          clearActiveSelection();
-          renderAll();
-          if (state.sheetUrl) fetchWeekFromSheet(state.weekStart);
-        });
-
-        el.nextWeekBtn.addEventListener('click', () => {
-          state.weekStart = shiftDays(state.weekStart, 7);
-          clearActiveSelection();
-          renderAll();
-          if (state.sheetUrl) fetchWeekFromSheet(state.weekStart);
-        });
-
-        el.todayWeekBtn.addEventListener('click', () => {
-          state.weekStart = TODAY_WEEK_START;
-          clearActiveSelection();
-          renderAll();
-          if (state.sheetUrl) fetchWeekFromSheet(state.weekStart);
-        });
-
-        // Custom Carer Name Input
-        el.customNameInput.addEventListener('input', (ev) => {
-          const val = ev.target.value;
-          state.customNameText = val;
-          el.clearCustomBtn.classList.toggle('visible', val.length > 0);
-          if (val.trim()) {
-            selectActiveCarer(val.trim(), true);
-          } else {
-            selectActiveCarer(DEFAULT_CARERS[0], true);
-          }
-        });
-
-        el.clearCustomBtn.addEventListener('click', () => {
-          el.customNameInput.value = '';
-          state.customNameText = '';
-          selectActiveCarer(DEFAULT_CARERS[0], false);
-        });
-
-        // Export JPEG & PDF
-        el.exportJpegBtn.addEventListener('click', exportRotaAsJpeg);
-        el.exportPdfBtn.addEventListener('click', exportRotaAsPdf);
-
-        // Schedule Grid Touch-Drag & Tap Selection
-        el.rotaBodyGrid.addEventListener('pointerdown', handleGridPointerDown);
-        el.rotaBodyGrid.addEventListener('pointermove', handleGridPointerMove);
-        window.addEventListener('pointerup', handleGridPointerUp);
-        window.addEventListener('pointercancel', handleGridPointerUp);
-
-        el.rotaBodyGrid.addEventListener(
-          'touchmove',
-          (ev) => {
-            if (state.pointerActive && state.pointerDragged) {
-              ev.preventDefault();
-            }
-          },
-          { passive: false }
-        );
-
-        // Thumb Action Bar Buttons
-        el.assignSelectionBtn.addEventListener('click', assignCarerToSelection);
-        el.clearSelectionBtn.addEventListener('click', clearActiveSelection);
-        el.removeCareSelectionBtn.addEventListener('click', removeCareFromSelection);
-
-        // Merged Block Inspector Sheet
-        el.closeInspectorBtn.addEventListener('click', closeBlockInspector);
-        el.blockInspectorBackdrop.addEventListener('click', (ev) => {
-          if (ev.target === el.blockInspectorBackdrop) closeBlockInspector();
-        });
-
-        el.reassignApplyBtn.addEventListener('click', () => {
-          const custom = el.reassignCustomInput.value.trim();
-          if (!custom) {
-            el.reassignCustomInput.focus();
-            showToast('Type a carer name to reassign');
-            return;
-          }
-          reassignMergedBlock(state.inspectedBlock, custom);
-        });
-
-        el.splitEditBlockBtn.addEventListener('click', () => {
-          const blk = state.inspectedBlock;
-          if (!blk) return;
-          fillRowRange(blk.day, blk.startRow, blk.endRow);
-          state.selectionAnchorRow = blk.startRow;
-          selectActiveCarer(blk.carerName, false);
-          closeBlockInspector();
-          applySelectionClasses();
-          updateThumbActionBar();
-          showToast('Slots selected — tap a slot to adjust range');
-        });
-
-        el.deleteBlockBtn.addEventListener('click', () => {
-          deleteMergedBlock(state.inspectedBlock);
-        });
-
-        // Google Sheet Sync Modal
-        el.openSheetModalBtn.addEventListener('click', openSheetSyncModal);
-        el.closeSyncModalBtn.addEventListener('click', closeSheetSyncModal);
-        el.sheetSyncBackdrop.addEventListener('click', (ev) => {
-          if (ev.target === el.sheetSyncBackdrop) closeSheetSyncModal();
-        });
-
-        el.copyScriptBtn.addEventListener('click', copyAppsScript);
-
-        el.saveAndSyncBtn.addEventListener('click', () => {
-          const url = el.webAppUrlInput.value.trim();
-          if (!url) {
-            el.webAppUrlInput.focus();
-            showToast('Paste your Google Apps Script Web App URL');
-            return;
-          }
-          state.sheetUrl = url;
-          localStorage.setItem(STORAGE_KEY_URL, url);
-          updateSyncBadge();
-          closeSheetSyncModal();
-          fetchWeekFromSheet(state.weekStart, true);
-        });
-
-        el.syncNowBtn.addEventListener('click', () => {
-          if (!state.sheetUrl) {
-            el.webAppUrlInput.focus();
-            showToast('Save your Web App URL first');
-            return;
-          }
-          closeSheetSyncModal();
-          fetchWeekFromSheet(state.weekStart, true);
-        });
-
-        el.loadSampleBtn.addEventListener('click', () => {
-          loadSampleRota();
-          closeSheetSyncModal();
-        });
-
-        el.clearWeekBtn.addEventListener('click', () => {
-          if (!state.clearConfirmArmed) {
-            state.clearConfirmArmed = true;
-            el.clearWeekBtn.textContent = 'Tap Again to Confirm';
-            setTimeout(() => {
-              state.clearConfirmArmed = false;
-              if (el.clearWeekBtn) el.clearWeekBtn.textContent = 'Clear Week';
-            }, 3500);
-            return;
-          }
-
-          state.clearConfirmArmed = false;
-          el.clearWeekBtn.textContent = 'Clear Week';
-          setWeekBookings(state.weekStart, []);
-          clearActiveSelection();
-          renderAll();
-          if (state.sheetUrl) {
-            pushMutationToSheet({ action: 'clearWeek', weekStart: state.weekStart });
-          }
-          closeSheetSyncModal();
-          showToast('Cleared all shifts for this week');
-        });
-
-        el.disconnectUrlBtn.addEventListener('click', () => {
-          state.sheetUrl = '';
-          localStorage.removeItem(STORAGE_KEY_URL);
-          updateSyncBadge();
-          closeSheetSyncModal();
-          showToast('Disconnected (Local Mode)');
-        });
-      }
-
-      /* ======================================================================
-         15. Initialize Application
-         ====================================================================== */
-      function init() {
-        bindEvents();
-        renderAll();
-        if (state.sheetUrl) {
-          fetchWeekFromSheet(state.weekStart, false);
-        }
-      }
-
-      init();
-    })();
-  </script>
+  // Init
+  renderCarerStrip();
+  renderSchedule();
+  pullFromSheet();
+</script>
 </body>
 </html>
